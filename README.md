@@ -1,4 +1,4 @@
-# GitTrend JP
+# GitTrend\n\n![Test Deployment](https://img.shields.io/badge/Status-Verified-brightgreen)\n JP
 
 日本人開発者向けGitHubトレンド毎日配信アプリ
 
