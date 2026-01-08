@@ -1,17 +1,48 @@
 import 'package:dio/dio.dart';
 import '../models/repository.dart';
+import '../../core/config/environment.dart';
+import '../../core/utils/logger.dart';
+import '../../core/errors/api_exception.dart';
 
 enum TrendingSince { daily, weekly, monthly }
 
 class GitHubApi {
+  static const String _tag = 'GitHubApi';
   final Dio _dio;
-  static const String _baseUrl = 'https://gettrending-z272xsgkhq-an.a.run.app';
-  static const String _summaryUrl = 'https://getreposummary-z272xsgkhq-an.a.run.app';
-  static const String _addBookmarkUrl = 'https://addbookmark-z272xsgkhq-an.a.run.app';
-  static const String _removeBookmarkUrl = 'https://removebookmark-z272xsgkhq-an.a.run.app';
-  static const String _getBookmarksUrl = 'https://getbookmarks-z272xsgkhq-an.a.run.app';
+  bool _isHealthy = true;
+  DateTime? _lastHealthCheck;
   
-  GitHubApi({Dio? dio}) : _dio = dio ?? Dio();
+  GitHubApi({Dio? dio}) : _dio = dio ?? Dio() {
+    Environment.printConfig();
+  }
+
+  Future<bool> checkHealth() async {
+    try {
+      Logger.debug(_tag, 'Checking API health...');
+      final response = await _dio.get(
+        Environment.baseUrl,
+        queryParameters: {'since': 'daily', 'limit': 1},
+        options: Options(
+          sendTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 5),
+        ),
+      );
+      
+      _isHealthy = response.statusCode == 200;
+      _lastHealthCheck = DateTime.now();
+      
+      Logger.info(_tag, 'Health check result: $_isHealthy');
+      return _isHealthy;
+    } catch (e) {
+      _isHealthy = false;
+      _lastHealthCheck = DateTime.now();
+      Logger.error(_tag, 'Health check failed', e);
+      return false;
+    }
+  }
+
+  bool get isHealthy => _isHealthy;
+  DateTime? get lastHealthCheck => _lastHealthCheck;
 
   Future<List<Repository>> getTrending({
     TrendingSince since = TrendingSince.daily,
@@ -19,9 +50,11 @@ class GitHubApi {
     int limit = 30,
     bool withSummary = true,
   }) async {
+    Logger.debug(_tag, 'getTrending called: since=$since, limit=$limit');
+    
     try {
       final response = await _dio.get(
-        _baseUrl,
+        Environment.baseUrl,
         queryParameters: {
           'since': since.name,
           'limit': limit,
@@ -34,14 +67,66 @@ class GitHubApi {
         final Map<String, dynamic> responseData = response.data;
         if (responseData['success'] == true) {
           final List<dynamic> data = responseData['data'];
+          Logger.info(_tag, 'getTrending success: ${data.length} repositories');
+          _isHealthy = true;
           return data.map((json) => _parseRepository(json)).toList();
         }
+        
+        Logger.warning(_tag, 'API returned success=false', responseData);
+        throw ApiException('API returned unsuccessful response');
       }
-      return [];
-    } catch (e) {
-      print('[GitHubApi] getTrending error: $e');
-      return _getMockData();
+      
+      Logger.warning(_tag, 'Unexpected status code: ${response.statusCode}');
+      throw ApiServerException('Server returned status ${response.statusCode}');
+    } on DioException catch (e, stack) {
+      _isHealthy = false;
+      return _handleDioError(e, stack, 'getTrending');
+    } catch (e, stack) {
+      Logger.error(_tag, 'Unexpected error in getTrending', e, stack);
+      rethrow;
     }
+  }
+
+  List<Repository> _handleDioError(DioException e, StackTrace stack, String operation) {
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
+      Logger.error(_tag, '$operation: Connection timeout', e, stack);
+      throw ApiConnectionException(
+        'サーバーへの接続がタイムアウトしました。ネットワーク接続を確認してください。',
+        originalError: e,
+      );
+    }
+    
+    if (e.type == DioExceptionType.connectionError) {
+      Logger.error(_tag, '$operation: Connection error', e, stack);
+      throw ApiConnectionException(
+        'サーバーに接続できません。ネットワーク接続を確認してください。',
+        originalError: e,
+      );
+    }
+    
+    if (e.response?.statusCode == 404) {
+      Logger.error(_tag, '$operation: API endpoint not found (404)', e, stack);
+      throw ApiNotFoundException(
+        'APIエンドポイントが見つかりません。設定を確認してください。',
+        originalError: e,
+      );
+    }
+    
+    if (e.response?.statusCode != null && e.response!.statusCode! >= 500) {
+      Logger.error(_tag, '$operation: Server error (${e.response?.statusCode})', e, stack);
+      throw ApiServerException(
+        'サーバーエラーが発生しました。しばらく後でもう一度お試しください。',
+        originalError: e,
+      );
+    }
+    
+    Logger.error(_tag, '$operation: Unknown Dio error', e, stack);
+    throw ApiException(
+      'データの取得に失敗しました。',
+      originalError: e,
+    );
   }
 
   Repository _parseRepository(Map<String, dynamic> json) {
@@ -63,52 +148,65 @@ class GitHubApi {
   }
 
   Future<Map<String, String?>> getRepoSummary(String fullName, String description) async {
-    print('[GitHubApi] getRepoSummary called for: $fullName');
+    Logger.debug(_tag, 'getRepoSummary called for: $fullName');
+    
     try {
       final response = await _dio.get(
-        _summaryUrl,
+        Environment.summaryUrl,
         queryParameters: {
           'repo': fullName,
           'description': description,
         },
       );
 
-      print('[GitHubApi] Response status: ${response.statusCode}');
-      print('[GitHubApi] Response data: ${response.data}');
+      Logger.debug(_tag, 'Response status: ${response.statusCode}');
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         final data = response.data['data'];
-        print('[GitHubApi] Success! descriptionJa: ${data['descriptionJa']}');
+        Logger.info(_tag, 'getRepoSummary success for: $fullName');
         return {
           'descriptionJa': data['descriptionJa'],
           'summaryJa': data['readmeSummaryJa'],
         };
       }
-    } catch (e) {
-      print('[GitHubApi] Error: $e');
+      
+      Logger.warning(_tag, 'getRepoSummary: Unsuccessful response for $fullName');
+      return {'descriptionJa': null, 'summaryJa': null};
+    } on DioException catch (e, stack) {
+      Logger.error(_tag, 'getRepoSummary error for $fullName', e, stack);
+      return {'descriptionJa': null, 'summaryJa': null};
     }
-    return {'descriptionJa': null, 'summaryJa': null};
   }
 
   Future<List<Map<String, dynamic>>> getBookmarks(String userId) async {
+    Logger.debug(_tag, 'getBookmarks called for userId: $userId');
+    
     try {
       final response = await _dio.get(
-        _getBookmarksUrl,
+        Environment.getBookmarksUrl,
         queryParameters: {'userId': userId},
       );
+      
       if (response.statusCode == 200 && response.data['success'] == true) {
-        return List<Map<String, dynamic>>.from(response.data['data'] ?? []);
+        final bookmarks = List<Map<String, dynamic>>.from(response.data['data'] ?? []);
+        Logger.info(_tag, 'getBookmarks success: ${bookmarks.length} items');
+        return bookmarks;
       }
-    } catch (e) {
-      print('[GitHubApi] getBookmarks error: $e');
+      
+      Logger.warning(_tag, 'getBookmarks: Unsuccessful response');
+      return [];
+    } on DioException catch (e, stack) {
+      Logger.error(_tag, 'getBookmarks error', e, stack);
+      throw ApiException('ブックマークの取得に失敗しました。', originalError: e);
     }
-    return [];
   }
 
   Future<bool> addBookmark(String userId, Repository repo) async {
+    Logger.debug(_tag, 'addBookmark called for: ${repo.fullName}');
+    
     try {
       final response = await _dio.post(
-        '$_addBookmarkUrl?userId=$userId',
+        '${Environment.addBookmarkUrl}?userId=$userId',
         data: {
           'repositoryId': repo.fullName,
           'fullName': repo.fullName,
@@ -121,87 +219,34 @@ class GitHubApi {
           'url': repo.url,
         },
       );
-      return response.statusCode == 200 && response.data['success'] == true;
-    } catch (e) {
-      print('[GitHubApi] addBookmark error: $e');
-      return false;
+      
+      final success = response.statusCode == 200 && response.data['success'] == true;
+      Logger.info(_tag, 'addBookmark ${success ? 'success' : 'failed'} for: ${repo.fullName}');
+      return success;
+    } on DioException catch (e, stack) {
+      Logger.error(_tag, 'addBookmark error for: ${repo.fullName}', e, stack);
+      throw ApiException('ブックマークの追加に失敗しました。', originalError: e);
     }
   }
 
   Future<bool> removeBookmark(String userId, String repositoryId) async {
+    Logger.debug(_tag, 'removeBookmark called for: $repositoryId');
+    
     try {
       final response = await _dio.delete(
-        _removeBookmarkUrl,
+        Environment.removeBookmarkUrl,
         queryParameters: {
           'userId': userId,
           'repositoryId': repositoryId,
         },
       );
-      return response.statusCode == 200 && response.data['success'] == true;
-    } catch (e) {
-      print('[GitHubApi] removeBookmark error: $e');
-      return false;
+      
+      final success = response.statusCode == 200 && response.data['success'] == true;
+      Logger.info(_tag, 'removeBookmark ${success ? 'success' : 'failed'} for: $repositoryId');
+      return success;
+    } on DioException catch (e, stack) {
+      Logger.error(_tag, 'removeBookmark error for: $repositoryId', e, stack);
+      throw ApiException('ブックマークの削除に失敗しました。', originalError: e);
     }
-  }
-
-  List<Repository> _getMockData() {
-    return [
-      const Repository(
-        id: 'openai/whisper-jp',
-        name: 'whisper-jp',
-        fullName: 'openai/whisper-jp',
-        owner: 'openai',
-        description: 'Japanese-optimized speech recognition model with improved accuracy for business conversations',
-        stars: 2847,
-        starsToday: 123,
-        language: 'Python',
-        url: 'https://github.com/openai/whisper-jp',
-      ),
-      const Repository(
-        id: 'vercel/next-intl',
-        name: 'next-intl',
-        fullName: 'vercel/next-intl',
-        owner: 'vercel',
-        description: 'Internationalization for Next.js with full Japanese support and RTL layouts',
-        stars: 1523,
-        starsToday: 45,
-        language: 'TypeScript',
-        url: 'https://github.com/vercel/next-intl',
-      ),
-      const Repository(
-        id: 'line/armeria',
-        name: 'armeria',
-        fullName: 'line/armeria',
-        owner: 'line',
-        description: 'Your go-to microservice framework for any situation',
-        stars: 4201,
-        starsToday: 32,
-        language: 'Java',
-        hasJapaneseReadme: true,
-        url: 'https://github.com/line/armeria',
-      ),
-      const Repository(
-        id: 'nicklockwood/SwiftFormat',
-        name: 'SwiftFormat',
-        fullName: 'nicklockwood/SwiftFormat',
-        owner: 'nicklockwood',
-        description: 'A command-line tool and Xcode Extension for formatting Swift code',
-        stars: 7892,
-        starsToday: 28,
-        language: 'Swift',
-        url: 'https://github.com/nicklockwood/SwiftFormat',
-      ),
-      const Repository(
-        id: 'rust-lang/rustlings',
-        name: 'rustlings',
-        fullName: 'rust-lang/rustlings',
-        owner: 'rust-lang',
-        description: 'Small exercises to get you used to reading and writing Rust code!',
-        stars: 52400,
-        starsToday: 156,
-        language: 'Rust',
-        url: 'https://github.com/rust-lang/rustlings',
-      ),
-    ];
   }
 }

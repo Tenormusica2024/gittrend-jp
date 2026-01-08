@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/errors/api_exception.dart';
 import '../../../data/datasources/github_api.dart';
 import '../../../data/models/repository.dart';
 import '../../../data/providers/providers.dart';
@@ -106,7 +107,66 @@ class _TrendingList extends ConsumerWidget {
     return asyncRepos.when(
       data: (repos) => _buildList(context, ref, repos, title, l10n),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, stack) => _buildErrorView(context, ref, e, l10n),
+    );
+  }
+
+  Widget _buildErrorView(BuildContext context, WidgetRef ref, Object error, AppLocalizations l10n) {
+    String message;
+    IconData icon;
+    
+    if (error is ApiConnectionException) {
+      message = error.message;
+      icon = Icons.wifi_off;
+    } else if (error is ApiNotFoundException) {
+      message = error.message;
+      icon = Icons.error_outline;
+    } else if (error is ApiServerException) {
+      message = error.message;
+      icon = Icons.cloud_off;
+    } else if (error is ApiException) {
+      message = error.message;
+      icon = Icons.warning_amber;
+    } else {
+      message = 'データの取得に失敗しました';
+      icon = Icons.error;
+    }
+    
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 64,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                ref.invalidate(trendingRepositoriesProvider(since));
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('再試行'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
