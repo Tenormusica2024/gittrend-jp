@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../data/datasources/github_api.dart';
+import '../../../data/models/repository.dart';
+import '../../../data/providers/providers.dart';
 import '../../widgets/repository_card.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -27,13 +32,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.l10n;
+
     return Scaffold(
       appBar: AppBar(
         title: ShaderMask(
           shaderCallback: (bounds) => AppColors.primaryGradient.createShader(bounds),
-          child: const Text(
-            'GitTrend JP',
-            style: TextStyle(
+          child: Text(
+            l10n.appTitle,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
               color: Colors.white,
@@ -46,8 +53,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () {},
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.invalidate(trendingRepositoriesProvider(TrendingSince.daily));
+              ref.invalidate(trendingRepositoriesProvider(TrendingSince.weekly));
+              ref.invalidate(trendingRepositoriesProvider(TrendingSince.monthly));
+            },
           ),
         ],
         bottom: TabBar(
@@ -57,111 +68,117 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           indicatorColor: AppColors.primary,
           indicatorWeight: 2,
           labelStyle: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
-          tabs: const [
-            Tab(text: 'Today'),
-            Tab(text: 'Weekly'),
-            Tab(text: 'Japanese'),
+          tabs: [
+            Tab(text: l10n.today),
+            Tab(text: l10n.weekly),
+            Tab(text: l10n.monthly),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
-          _TrendingList(title: "Today's Trending"),
-          _TrendingList(title: 'This Week'),
-          _TrendingList(title: 'Japanese Repos'),
+          _TrendingList(since: TrendingSince.daily, titleKey: 'todaysTrending'),
+          _TrendingList(since: TrendingSince.weekly, titleKey: 'thisWeek'),
+          _TrendingList(since: TrendingSince.monthly, titleKey: 'thisMonth'),
         ],
       ),
     );
   }
 }
 
-class _TrendingList extends StatelessWidget {
-  final String title;
+class _TrendingList extends ConsumerWidget {
+  final TrendingSince since;
+  final String titleKey;
 
-  const _TrendingList({required this.title});
+  const _TrendingList({required this.since, required this.titleKey});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncRepos = ref.watch(trendingRepositoriesProvider(since));
+    final l10n = ref.l10n;
+    final title = titleKey == 'todaysTrending' 
+        ? l10n.todaysTrending 
+        : titleKey == 'thisWeek' 
+            ? l10n.thisWeek 
+            : l10n.thisMonth;
+
+    return asyncRepos.when(
+      data: (repos) => _buildList(context, ref, repos, title, l10n),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+    );
+  }
+
+  Widget _buildList(BuildContext context, WidgetRef ref, List<Repository> repos, String title, AppLocalizations l10n) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(trendingRepositoriesProvider(since));
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        itemCount: repos.length + 1,
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _SectionHeader(title: title, newLabel: l10n.newLabel);
+          }
+          final repo = repos[index - 1];
+          return RepositoryCard(
+            fullName: repo.fullName,
+            description: repo.description,
+            stars: repo.stars,
+            starsToday: repo.starsToday,
+            language: repo.language,
+            tags: [],
+            onSaveToggle: () => ref.read(bookmarksProvider.notifier).toggleBookmark(repo),
+            descriptionJa: repo.descriptionJa,
+            summaryJa: repo.summaryJa,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String newLabel;
+
+  const _SectionHeader({required this.title, required this.newLabel});
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Container(
-                width: 4,
-                height: 24,
-                decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                title,
-                style: AppTypography.subtitle,
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'NEW',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 24,
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-        ),
-        const RepositoryCard(
-          fullName: 'openai/whisper-jp',
-          description: 'Japanese-optimized speech recognition model with improved accuracy for business conversations',
-          stars: 2847,
-          starsToday: 123,
-          language: 'Python',
-          tags: ['AI', 'Speech'],
-        ),
-        const RepositoryCard(
-          fullName: 'vercel/next-intl',
-          description: 'Internationalization for Next.js with full Japanese support and RTL layouts',
-          stars: 1523,
-          starsToday: 45,
-          language: 'TypeScript',
-          tags: ['i18n', 'Next.js'],
-        ),
-        const RepositoryCard(
-          fullName: 'line/armeria',
-          description: 'Your go-to microservice framework for any situation',
-          stars: 4201,
-          starsToday: 32,
-          language: 'Java',
-          tags: ['Microservices'],
-        ),
-        const RepositoryCard(
-          fullName: 'nicklockwood/SwiftFormat',
-          description: 'A command-line tool and Xcode Extension for formatting Swift code',
-          stars: 7892,
-          starsToday: 28,
-          language: 'Swift',
-          tags: ['Formatter', 'CLI'],
-        ),
-        const RepositoryCard(
-          fullName: 'rust-lang/rustlings',
-          description: 'Small exercises to get you used to reading and writing Rust code!',
-          stars: 52400,
-          starsToday: 156,
-          language: 'Rust',
-          tags: ['Learning', 'Tutorial'],
-        ),
-      ],
+          const SizedBox(width: 12),
+          Text(title, style: AppTypography.subtitle),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              newLabel,
+              style: AppTypography.caption.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

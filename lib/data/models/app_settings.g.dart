@@ -1,0 +1,56 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'app_settings.dart';
+
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
+class AppSettingsAdapter extends TypeAdapter<AppSettings> {
+  @override
+  final int typeId = 1;
+
+  @override
+  AppSettings read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return AppSettings(
+      notificationEnabled: fields[0] as bool,
+      notificationHour: fields[1] as int,
+      notificationMinute: fields[2] as int,
+      defaultLanguageFilter: fields[3] as String?,
+      minimumStars: fields[4] as int,
+      japaneseOnlyNotification: fields[5] as bool,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, AppSettings obj) {
+    writer
+      ..writeByte(6)
+      ..writeByte(0)
+      ..write(obj.notificationEnabled)
+      ..writeByte(1)
+      ..write(obj.notificationHour)
+      ..writeByte(2)
+      ..write(obj.notificationMinute)
+      ..writeByte(3)
+      ..write(obj.defaultLanguageFilter)
+      ..writeByte(4)
+      ..write(obj.minimumStars)
+      ..writeByte(5)
+      ..write(obj.japaneseOnlyNotification);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AppSettingsAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}

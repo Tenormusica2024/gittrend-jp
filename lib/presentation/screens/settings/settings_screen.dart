@@ -1,85 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../data/providers/providers.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(appSettingsProvider);
+    final l10n = ref.l10n;
+    final currentLocale = ref.watch(localeProvider);
 
-class _SettingsScreenState extends State<SettingsScreen> {
-  bool _notificationsEnabled = true;
-  bool _japaneseOnlyNotifications = false;
-  TimeOfDay _notificationTime = const TimeOfDay(hour: 8, minute: 0);
-  String _defaultLanguage = 'All';
-  int _minimumStars = 100;
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(l10n.settings),
       ),
       body: ListView(
         children: [
-          _SectionHeader(title: 'Notifications'),
+          _SectionHeader(title: l10n.language),
+          _LanguageTile(
+            currentLocale: currentLocale,
+            l10n: l10n,
+            onChanged: (locale) {
+              ref.read(localeProvider.notifier).state = locale;
+            },
+          ),
+          const Divider(),
+          _SectionHeader(title: l10n.notifications),
           _SwitchTile(
-            title: 'Daily Trending Alert',
-            subtitle: 'Get notified about trending repos',
-            value: _notificationsEnabled,
-            onChanged: (value) => setState(() => _notificationsEnabled = value),
+            title: l10n.dailyTrendingAlert,
+            subtitle: l10n.dailyTrendingAlertDesc,
+            value: settings.notificationEnabled,
+            onChanged: (value) {
+              ref.read(appSettingsProvider.notifier).setNotificationEnabled(value);
+            },
           ),
           _TimeTile(
-            title: 'Notification Time',
-            time: _notificationTime,
-            enabled: _notificationsEnabled,
+            title: l10n.notificationTime,
+            time: TimeOfDay(hour: settings.notificationHour, minute: settings.notificationMinute),
+            enabled: settings.notificationEnabled,
             onTap: () async {
               final time = await showTimePicker(
                 context: context,
-                initialTime: _notificationTime,
+                initialTime: TimeOfDay(hour: settings.notificationHour, minute: settings.notificationMinute),
               );
               if (time != null) {
-                setState(() => _notificationTime = time);
+                ref.read(appSettingsProvider.notifier).setNotificationTime(time.hour, time.minute);
               }
             },
           ),
           _SwitchTile(
-            title: 'Japanese Repos Only',
-            subtitle: 'Only notify for Japanese repos',
-            value: _japaneseOnlyNotifications,
-            enabled: _notificationsEnabled,
-            onChanged: (value) => setState(() => _japaneseOnlyNotifications = value),
+            title: l10n.japaneseReposOnly,
+            subtitle: l10n.japaneseReposOnlyDesc,
+            value: settings.japaneseOnlyNotification,
+            enabled: settings.notificationEnabled,
+            onChanged: (value) {
+              ref.read(appSettingsProvider.notifier).setJapaneseOnlyNotification(value);
+            },
           ),
           const Divider(),
-          _SectionHeader(title: 'Filters'),
+          _SectionHeader(title: l10n.filters),
           _SelectTile(
-            title: 'Default Language',
-            value: _defaultLanguage,
-            options: const ['All', 'Python', 'JavaScript', 'TypeScript', 'Java', 'Kotlin', 'Swift', 'Go', 'Rust'],
-            onChanged: (value) => setState(() => _defaultLanguage = value),
+            title: l10n.defaultLanguage,
+            value: settings.defaultLanguageFilter ?? l10n.all,
+            options: [l10n.all, 'Python', 'JavaScript', 'TypeScript', 'Java', 'Kotlin', 'Swift', 'Go', 'Rust'],
+            onChanged: (value) {
+              ref.read(appSettingsProvider.notifier).setDefaultLanguage(value == l10n.all ? null : value);
+            },
           ),
           _SliderTile(
-            title: 'Minimum Stars',
-            value: _minimumStars,
+            title: l10n.minimumStars,
+            value: settings.minimumStars,
             min: 0,
             max: 1000,
             divisions: 10,
-            onChanged: (value) => setState(() => _minimumStars = value.toInt()),
+            onChanged: (value) {
+              ref.read(appSettingsProvider.notifier).setMinimumStars(value.toInt());
+            },
           ),
           const Divider(),
-          _SectionHeader(title: 'About'),
-          const _InfoTile(
-            title: 'Version',
+          _SectionHeader(title: l10n.about),
+          _InfoTile(
+            title: l10n.version,
             value: '1.0.0',
           ),
           _LinkTile(
-            title: 'Privacy Policy',
+            title: l10n.privacyPolicy,
             onTap: () {},
           ),
           _LinkTile(
-            title: 'Terms of Service',
+            title: l10n.termsOfService,
             onTap: () {},
           ),
         ],
@@ -102,6 +115,47 @@ class _SectionHeader extends StatelessWidget {
         style: AppTypography.caption.copyWith(
           color: AppColors.textSecondary,
           fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageTile extends StatelessWidget {
+  final AppLocale currentLocale;
+  final AppLocalizations l10n;
+  final ValueChanged<AppLocale> onChanged;
+
+  const _LanguageTile({
+    required this.currentLocale,
+    required this.l10n,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(
+        l10n.language,
+        style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+      ),
+      trailing: SegmentedButton<AppLocale>(
+        segments: [
+          ButtonSegment(
+            value: AppLocale.ja,
+            label: Text(l10n.languageJapanese),
+          ),
+          ButtonSegment(
+            value: AppLocale.en,
+            label: Text(l10n.languageEnglish),
+          ),
+        ],
+        selected: {currentLocale},
+        onSelectionChanged: (Set<AppLocale> newSelection) {
+          onChanged(newSelection.first);
+        },
+        style: ButtonStyle(
+          visualDensity: VisualDensity.compact,
         ),
       ),
     );
@@ -200,7 +254,7 @@ class _SelectTile extends StatelessWidget {
         style: AppTypography.body.copyWith(color: AppColors.textPrimary),
       ),
       trailing: DropdownButton<String>(
-        value: value,
+        value: options.contains(value) ? value : options.first,
         underline: const SizedBox(),
         style: AppTypography.body.copyWith(color: AppColors.primary),
         onChanged: (newValue) {
