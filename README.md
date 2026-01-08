@@ -26,6 +26,7 @@ GitTrend JPは、GitHubのトレンドリポジトリを日本人開発者向け
 ## ドキュメント
 
 - [技術仕様書](docs/SPECIFICATION.md)
+- [トラブルシューティング](docs/TROUBLESHOOTING.md)
 
 ## 開発
 

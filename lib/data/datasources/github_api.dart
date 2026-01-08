@@ -5,11 +5,11 @@ enum TrendingSince { daily, weekly, monthly }
 
 class GitHubApi {
   final Dio _dio;
-  static const String _baseUrl = 'https://asia-northeast1-yt-transcript-demo-2025.cloudfunctions.net/getTrending';
-  static const String _summaryUrl = 'https://asia-northeast1-yt-transcript-demo-2025.cloudfunctions.net/getRepoSummary';
-  static const String _addBookmarkUrl = 'https://asia-northeast1-yt-transcript-demo-2025.cloudfunctions.net/addBookmark';
-  static const String _removeBookmarkUrl = 'https://asia-northeast1-yt-transcript-demo-2025.cloudfunctions.net/removeBookmark';
-  static const String _getBookmarksUrl = 'https://asia-northeast1-yt-transcript-demo-2025.cloudfunctions.net/getBookmarks';
+  static const String _baseUrl = 'https://gettrending-z272xsgkhq-an.a.run.app';
+  static const String _summaryUrl = 'https://getreposummary-z272xsgkhq-an.a.run.app';
+  static const String _addBookmarkUrl = 'https://addbookmark-z272xsgkhq-an.a.run.app';
+  static const String _removeBookmarkUrl = 'https://removebookmark-z272xsgkhq-an.a.run.app';
+  static const String _getBookmarksUrl = 'https://getbookmarks-z272xsgkhq-an.a.run.app';
   
   GitHubApi({Dio? dio}) : _dio = dio ?? Dio();
 
