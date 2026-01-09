@@ -44,6 +44,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Release signing
+android/key.properties
+android/*.jks
+keystore-base64.txt
+
 # Firebase Functions
 functions/node_modules/
 functions/lib/
