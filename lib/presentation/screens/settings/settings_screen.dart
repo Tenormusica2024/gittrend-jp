@@ -52,15 +52,6 @@ class SettingsScreen extends ConsumerWidget {
               }
             },
           ),
-          _SwitchTile(
-            title: l10n.japaneseReposOnly,
-            subtitle: l10n.japaneseReposOnlyDesc,
-            value: settings.japaneseOnlyNotification,
-            enabled: settings.notificationEnabled,
-            onChanged: (value) {
-              ref.read(appSettingsProvider.notifier).setJapaneseOnlyNotification(value);
-            },
-          ),
           const Divider(),
           _SectionHeader(title: l10n.filters),
           _SelectTile(
