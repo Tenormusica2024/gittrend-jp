@@ -193,6 +193,7 @@ class _TrendingList extends ConsumerWidget {
             onSaveToggle: () => ref.read(bookmarksProvider.notifier).toggleBookmark(repo),
             descriptionJa: repo.descriptionJa,
             summaryJa: repo.summaryJa,
+            url: repo.url,
           );
         },
       ),

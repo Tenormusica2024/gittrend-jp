@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/utils/logger.dart';
 import '../../data/providers/providers.dart';
 
-class RepositoryCard extends StatefulWidget {
+class RepositoryCard extends StatelessWidget {
+  static const String _tag = 'RepositoryCard';
+  
   final String fullName;
   final String description;
   final int stars;
@@ -16,6 +20,7 @@ class RepositoryCard extends StatefulWidget {
   final VoidCallback? onSaveToggle;
   final String? descriptionJa;
   final String? summaryJa;
+  final String? url;
 
   const RepositoryCard({
     super.key,
@@ -30,168 +35,178 @@ class RepositoryCard extends StatefulWidget {
     this.onSaveToggle,
     this.descriptionJa,
     this.summaryJa,
+    this.url,
   });
 
-  @override
-  State<RepositoryCard> createState() => _RepositoryCardState();
-}
-
-class _RepositoryCardState extends State<RepositoryCard> {
-  bool _isExpanded = true;
+  Future<void> _openGitHub(BuildContext context) async {
+    final urlString = url ?? 'https://github.com/$fullName';
+    final uri = Uri.parse(urlString);
+    
+    Logger.debug(_tag, 'Opening GitHub: $urlString');
+    
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        Logger.info(_tag, 'Successfully opened: $urlString');
+      } else {
+        Logger.warning(_tag, 'Cannot launch URL: $urlString');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('URLを開けませんでした')),
+          );
+        }
+      }
+    } catch (e, stack) {
+      Logger.error(_tag, 'Failed to open URL: $urlString', e, stack);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('URLを開けませんでした')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final displayDescription = widget.descriptionJa ?? widget.description;
-    final isLoading = widget.descriptionJa == null && widget.summaryJa == null;
+    final displayDescription = descriptionJa ?? description;
+    final isLoading = descriptionJa == null && summaryJa == null;
     
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: InkWell(
-        onTap: () {
-          setState(() => _isExpanded = !_isExpanded);
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _openGitHub(context),
                     child: Text(
-                      widget.fullName,
+                      fullName,
                       style: AppTypography.subtitle.copyWith(
                         color: AppColors.primary,
                       ),
                     ),
                   ),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star_rounded,
-                        color: AppColors.star,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _formatNumber(widget.stars),
-                        style: AppTypography.body.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              if (widget.starsToday != null && widget.starsToday! > 0) ...[
-                const SizedBox(height: 4),
-                Text(
-                  '+${widget.starsToday} today',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.success,
-                  ),
                 ),
-              ],
-              const SizedBox(height: 8),
-              if (isLoading)
                 Row(
                   children: [
-                    const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                    const Icon(
+                      Icons.star_rounded,
+                      color: AppColors.star,
+                      size: 18,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4),
                     Text(
-                      'Loading...',
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.textSecondary,
+                      _formatNumber(stars),
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
-                )
-              else
-                Text(
-                  displayDescription,
-                  style: AppTypography.body,
-                  maxLines: _isExpanded ? null : 2,
-                  overflow: _isExpanded ? null : TextOverflow.ellipsis,
                 ),
-              if (_isExpanded && widget.summaryJa != null && widget.summaryJa!.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppColors.primary.withOpacity(0.2),
+              ],
+            ),
+            if (starsToday != null && starsToday! > 0) ...[
+              const SizedBox(height: 4),
+              Text(
+                '+$starsToday today',
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.success,
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            if (isLoading)
+              Row(
+                children: [
+                  const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Loading...',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.auto_awesome,
-                            size: 14,
-                            color: AppColors.primary.withOpacity(0.8),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'README Summary',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.summaryJa!,
-                        style: AppTypography.body.copyWith(
-                          color: AppColors.textPrimary,
-                          height: 1.6,
+                ],
+              )
+            else
+              Text(
+                displayDescription,
+                style: AppTypography.body,
+              ),
+            if (summaryJa != null && summaryJa!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.2),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          size: 14,
+                          color: AppColors.primary.withOpacity(0.8),
                         ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'README Summary',
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      summaryJa!,
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.textPrimary,
+                        height: 1.6,
                       ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (language != null) _LanguageTag(language: language!),
+                      ...tags.map((tag) => _Tag(label: tag)),
                     ],
                   ),
                 ),
+                if (onSaveToggle != null)
+                  _BookmarkButton(
+                    fullName: fullName,
+                    onToggle: onSaveToggle!,
+                  ),
               ],
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        if (widget.language != null) _LanguageTag(language: widget.language!),
-                        ...widget.tags.map((tag) => _Tag(label: tag)),
-                      ],
-                    ),
-                  ),
-                  if (widget.onSaveToggle != null)
-                    _BookmarkButton(
-                      fullName: widget.fullName,
-                      onToggle: widget.onSaveToggle!,
-                    ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    _isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: AppColors.textSecondary,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

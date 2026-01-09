@@ -1,11 +1,11 @@
 {
-    "name": "gittrend_jp",
-    "short_name": "gittrend_jp",
+    "name": "GitTrend JP",
+    "short_name": "GitTrend JP",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F8FAFC",
+    "theme_color": "#0EA5E9",
+    "description": "GitHub Trending repositories with Japanese translations",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/providers/providers.dart';
@@ -70,12 +69,12 @@ class SavedScreen extends ConsumerWidget {
                       language: saved.language,
                       tags: const [],
                       isSaved: true,
-                      onTap: () => _launchUrl(saved.url ?? ''),
                       onSaveToggle: () {
                         ref.read(bookmarksProvider.notifier).removeBookmark(saved.repositoryId);
                       },
                       descriptionJa: saved.descriptionJa,
                       summaryJa: saved.summaryJa,
+                      url: saved.url,
                     );
                   },
                 ),
@@ -83,13 +82,4 @@ class SavedScreen extends ConsumerWidget {
       ),
     );
   }
-
-  Future<void> _launchUrl(String url) async {
-    if (url.isEmpty) return;
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
 }
