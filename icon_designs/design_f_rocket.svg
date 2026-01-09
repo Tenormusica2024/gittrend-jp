@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="spaceGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F172A"/>
+      <stop offset="100%" style="stop-color:#1E293B"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="80" fill="url(#spaceGrad)"/>
+  <circle cx="120" cy="100" r="4" fill="#FCD34D"/>
+  <circle cx="400" cy="150" r="3" fill="#FCD34D"/>
+  <circle cx="80" cy="300" r="2" fill="#FCD34D"/>
+  <circle cx="450" cy="350" r="3" fill="#FCD34D"/>
+  <path d="M256 80 L290 200 L330 200 L290 280 L310 280 L256 400 L202 280 L222 280 L182 200 L222 200 Z" fill="#F97316"/>
+  <path d="M256 120 L280 200 L300 200 L270 260 L285 260 L256 350 L227 260 L242 260 L212 200 L232 200 Z" fill="#FBBF24"/>
+  <ellipse cx="256" cy="200" rx="30" ry="40" fill="white"/>
+  <ellipse cx="256" cy="195" rx="15" ry="20" fill="#0EA5E9"/>
+  <text x="256" y="480" font-family="Arial, sans-serif" font-size="56" font-weight="bold" fill="white" text-anchor="middle">TREND</text>
+</svg>

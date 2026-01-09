@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="hotGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#DC2626"/>
+      <stop offset="50%" style="stop-color:#F97316"/>
+      <stop offset="100%" style="stop-color:#FBBF24"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="80" fill="#18181B"/>
+  <polygon points="256,40 295,180 440,180 325,270 360,410 256,330 152,410 187,270 72,180 217,180" fill="url(#hotGrad)"/>
+  <polygon points="256,100 280,190 380,190 300,250 325,350 256,290 187,350 212,250 132,190 232,190" fill="#FEF3C7"/>
+  <text x="256" y="490" font-family="Arial Black, sans-serif" font-size="48" font-weight="900" fill="white" text-anchor="middle">HOT</text>
+</svg>
