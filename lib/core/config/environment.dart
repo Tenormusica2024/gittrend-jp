@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 
 class Environment {
-  static const String _defaultBaseUrl = 'https://gettrending-z272xsgkhq-an.a.run.app';
-  static const String _defaultSummaryUrl = 'https://getreposummary-z272xsgkhq-an.a.run.app';
-  static const String _defaultAddBookmarkUrl = 'https://addbookmark-z272xsgkhq-an.a.run.app';
-  static const String _defaultRemoveBookmarkUrl = 'https://removebookmark-z272xsgkhq-an.a.run.app';
-  static const String _defaultGetBookmarksUrl = 'https://getbookmarks-z272xsgkhq-an.a.run.app';
+  static const String _defaultBaseUrl = 'https://gettrending-ycqe3vmjva-an.a.run.app';
+  static const String _defaultSummaryUrl = 'https://getreposummary-ycqe3vmjva-an.a.run.app';
+  static const String _defaultAddBookmarkUrl = 'https://addbookmark-ycqe3vmjva-an.a.run.app';
+  static const String _defaultRemoveBookmarkUrl = 'https://removebookmark-ycqe3vmjva-an.a.run.app';
+  static const String _defaultGetBookmarksUrl = 'https://getbookmarks-ycqe3vmjva-an.a.run.app';
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',

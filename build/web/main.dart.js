@@ -89444,7 +89444,7 @@ J.hM(m,"limit",b)
 J.hM(m,"withSummary",String(a))
 if(c!=null&&J.k0(c))J.hM(m,"language",c)
 s=7
-return A.Q(n.a.LR(0,"https://gettrending-z272xsgkhq-an.a.run.app",m,e),$async$xG)
+return A.Q(n.a.LR(0,"https://gettrending-ycqe3vmjva-an.a.run.app",m,e),$async$xG)
 case 7:l=a3
 if(l.c===200){k=l.a
 if(J.c(J.br(k,"success"),!0)){j=J.br(k,"data")
@@ -89498,7 +89498,7 @@ s=p}while(true)switch(s){case 0:A.dz(B.cY,"GitHubApi","getBookmarks called for u
 p=4
 i=t.z
 s=7
-return A.Q(n.a.LR(0,"https://getbookmarks-z272xsgkhq-an.a.run.app",A.aF(["userId",a],t.N,i),i),$async$xA)
+return A.Q(n.a.LR(0,"https://getbookmarks-ycqe3vmjva-an.a.run.app",A.aF(["userId",a],t.N,i),i),$async$xA)
 case 7:m=c
 if(m.c===200&&J.c(J.br(m.a,"success"),!0)){i=J.br(m.a,"data")
 if(i==null)i=[]
@@ -89535,7 +89535,7 @@ s=p}while(true)switch(s){case 0:g=b.c
 A.dz(B.cY,"GitHubApi","addBookmark called for: "+g,null,null)
 p=4
 s=7
-return A.Q(n.a.x5(0,"https://addbookmark-z272xsgkhq-an.a.run.app?userId="+a,null,A.aF(["repositoryId",g,"fullName",g,"name",b.b,"description",b.e,"descriptionJa",b.at,"summaryJa",b.ax,"stars",b.f,"language",b.x,"url",b.Q],t.N,t.X),null,null,A.aAu("POST",null),null,t.z),$async$Ai)
+return A.Q(n.a.x5(0,"https://addbookmark-ycqe3vmjva-an.a.run.app?userId="+a,null,A.aF(["repositoryId",g,"fullName",g,"name",b.b,"description",b.e,"descriptionJa",b.at,"summaryJa",b.ax,"stars",b.f,"language",b.x,"url",b.Q],t.N,t.X),null,null,A.aAu("POST",null),null,t.z),$async$Ai)
 case 7:m=d
 l=m.c===200&&J.c(J.br(m.a,"success"),!0)
 A.dz(B.dZ,"GitHubApi","addBookmark "+(l?"success":"failed")+" for: "+g,null,null)
@@ -89567,7 +89567,7 @@ p=4
 i=t.z
 h=A.aF(["userId",a,"repositoryId",b],t.N,i)
 s=7
-return A.Q(n.a.auY(0,"https://removebookmark-z272xsgkhq-an.a.run.app",null,null,A.aAu("DELETE",null),h,i),$async$x4)
+return A.Q(n.a.auY(0,"https://removebookmark-ycqe3vmjva-an.a.run.app",null,null,A.aAu("DELETE",null),h,i),$async$x4)
 case 7:m=d
 l=m.c===200&&J.c(J.br(m.a,"success"),!0)
 A.dz(B.dZ,"GitHubApi","removeBookmark "+(l?"success":"failed")+" for: "+b,null,null)
