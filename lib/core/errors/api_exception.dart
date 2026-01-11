@@ -10,26 +10,26 @@ class ApiException implements Exception {
 }
 
 class ApiConnectionException extends ApiException {
-  ApiConnectionException(String message, {dynamic originalError})
-      : super(message, code: 'CONNECTION_ERROR', originalError: originalError);
+  ApiConnectionException(super.message, {super.originalError})
+      : super(code: 'CONNECTION_ERROR');
 }
 
 class ApiNotFoundException extends ApiException {
-  ApiNotFoundException(String message, {dynamic originalError})
-      : super(message, code: 'NOT_FOUND', originalError: originalError);
+  ApiNotFoundException(super.message, {super.originalError})
+      : super(code: 'NOT_FOUND');
 }
 
 class ApiServerException extends ApiException {
-  ApiServerException(String message, {dynamic originalError})
-      : super(message, code: 'SERVER_ERROR', originalError: originalError);
+  ApiServerException(super.message, {super.originalError})
+      : super(code: 'SERVER_ERROR');
 }
 
 class ApiRateLimitException extends ApiException {
   final int retryAfterSeconds;
 
   ApiRateLimitException(
-    String message, {
+    super.message, {
     this.retryAfterSeconds = 60,
-    dynamic originalError,
-  }) : super(message, code: 'RATE_LIMIT', originalError: originalError);
+    super.originalError,
+  }) : super(code: 'RATE_LIMIT');
 }
