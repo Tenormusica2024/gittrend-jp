@@ -77,7 +77,7 @@ class SettingsScreen extends ConsumerWidget {
           _SectionHeader(title: l10n.about),
           _InfoTile(
             title: l10n.version,
-            value: '1.0.0',
+            value: '1.0.2',
           ),
           _LinkTile(
             title: l10n.privacyPolicy,

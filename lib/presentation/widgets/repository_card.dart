@@ -70,8 +70,11 @@ class RepositoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayDescription = descriptionJa ?? description;
     final isLoading = descriptionJa == null && summaryJa == null;
-    
-    return Card(
+
+    return Semantics(
+      container: true,
+      label: 'リポジトリ: $fullName, スター数: ${_formatNumber(stars)}${starsToday != null && starsToday! > 0 ? ", 本日 +$starsToday" : ""}, ${language ?? "言語不明"}',
+      child: Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -209,6 +212,7 @@ class RepositoryCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -288,14 +292,19 @@ class _BookmarkButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isBookmarked = ref.watch(bookmarkedIdsProvider).contains(fullName);
-    return IconButton(
-      icon: Icon(
-        isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
-        color: isBookmarked ? AppColors.primary : AppColors.textSecondary,
+    return Semantics(
+      button: true,
+      label: isBookmarked ? 'ブックマークを解除' : 'ブックマークに追加',
+      child: IconButton(
+        icon: Icon(
+          isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
+          color: isBookmarked ? AppColors.primary : AppColors.textSecondary,
+        ),
+        onPressed: onToggle,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        tooltip: isBookmarked ? 'ブックマークを解除' : 'ブックマークに追加',
       ),
-      onPressed: onToggle,
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(),
     );
   }
 }

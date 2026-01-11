@@ -7,14 +7,19 @@ import 'data/models/app_settings.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  await Hive.initFlutter();
-  Hive.registerAdapter(SavedRepositoryAdapter());
-  Hive.registerAdapter(AppSettingsAdapter());
-  await Hive.openBox<SavedRepository>('saved_repositories');
-  await Hive.openBox<AppSettings>('app_settings');
-  await Hive.openBox<String>('user_data');
-  
+
+  try {
+    await Hive.initFlutter();
+    Hive.registerAdapter(SavedRepositoryAdapter());
+    Hive.registerAdapter(AppSettingsAdapter());
+    await Hive.openBox<SavedRepository>('saved_repositories');
+    await Hive.openBox<AppSettings>('app_settings');
+    await Hive.openBox<String>('user_data');
+  } catch (e) {
+    debugPrint('Hive initialization error: $e');
+    // Continue app launch even if Hive fails - features will degrade gracefully
+  }
+
   runApp(
     const ProviderScope(
       child: GitTrendApp(),

@@ -23,3 +23,13 @@ class ApiServerException extends ApiException {
   ApiServerException(String message, {dynamic originalError})
       : super(message, code: 'SERVER_ERROR', originalError: originalError);
 }
+
+class ApiRateLimitException extends ApiException {
+  final int retryAfterSeconds;
+
+  ApiRateLimitException(
+    String message, {
+    this.retryAfterSeconds = 60,
+    dynamic originalError,
+  }) : super(message, code: 'RATE_LIMIT', originalError: originalError);
+}

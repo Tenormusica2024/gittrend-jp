@@ -12,7 +12,13 @@ class GitHubApi {
   bool _isHealthy = true;
   DateTime? _lastHealthCheck;
   
-  GitHubApi({Dio? dio}) : _dio = dio ?? Dio() {
+  GitHubApi({Dio? dio})
+      : _dio = dio ??
+            Dio(BaseOptions(
+              connectTimeout: const Duration(seconds: 15),
+              receiveTimeout: const Duration(seconds: 30),
+              sendTimeout: const Duration(seconds: 15),
+            )) {
     Environment.printConfig();
   }
 
@@ -113,7 +119,18 @@ class GitHubApi {
         originalError: e,
       );
     }
-    
+
+    if (e.response?.statusCode == 429) {
+      final retryAfter = e.response?.headers.value('retry-after');
+      final waitSeconds = retryAfter != null ? int.tryParse(retryAfter) ?? 60 : 60;
+      Logger.error(_tag, '$operation: Rate limit exceeded (429), retry after $waitSeconds seconds', e, stack);
+      throw ApiRateLimitException(
+        'APIリクエスト制限に達しました。$waitSeconds秒後に再試行してください。',
+        retryAfterSeconds: waitSeconds,
+        originalError: e,
+      );
+    }
+
     if (e.response?.statusCode != null && e.response!.statusCode! >= 500) {
       Logger.error(_tag, '$operation: Server error (${e.response?.statusCode})', e, stack);
       throw ApiServerException(
