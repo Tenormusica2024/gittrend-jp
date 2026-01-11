@@ -20,6 +20,7 @@ class RepositoryDetailScreen extends StatefulWidget {
 class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
   final GitHubApi _api = GitHubApi();
   bool _isLoading = true;
+  bool _hasError = false;
   String? _descriptionJa;
   String? _summaryJa;
 
@@ -30,16 +31,26 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
   }
 
   Future<void> _loadSummary() async {
-    final result = await _api.getRepoSummary(
-      widget.repository.fullName,
-      widget.repository.description,
-    );
-    if (mounted) {
-      setState(() {
-        _descriptionJa = result['descriptionJa'];
-        _summaryJa = result['summaryJa'];
-        _isLoading = false;
-      });
+    try {
+      final result = await _api.getRepoSummary(
+        widget.repository.fullName,
+        widget.repository.description,
+      );
+      if (mounted) {
+        setState(() {
+          _descriptionJa = result['descriptionJa'];
+          _summaryJa = result['summaryJa'];
+          _isLoading = false;
+          _hasError = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
     }
   }
 
@@ -220,6 +231,37 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
               child: Padding(
                 padding: EdgeInsets.all(20),
                 child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_hasError)
+            Center(
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: AppColors.textSecondary,
+                    size: 32,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '翻訳の取得に失敗しました',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _isLoading = true;
+                        _hasError = false;
+                      });
+                      _loadSummary();
+                    },
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text('再試行'),
+                  ),
+                ],
               ),
             )
           else ...[

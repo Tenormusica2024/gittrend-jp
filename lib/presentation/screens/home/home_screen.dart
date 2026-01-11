@@ -18,18 +18,30 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
   Timer? _autoRefreshTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 3, vsync: this);
     _startAutoRefresh();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startAutoRefresh();
+    } else if (state == AppLifecycleState.paused) {
+      _autoRefreshTimer?.cancel();
+      _autoRefreshTimer = null;
+    }
+  }
+
   void _startAutoRefresh() {
+    _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(const Duration(hours: 1), (_) {
       _refreshAllData();
     });
@@ -43,6 +55,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _autoRefreshTimer?.cancel();
     _tabController.dispose();
     super.dispose();
