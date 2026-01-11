@@ -147,12 +147,21 @@ class BookmarksNotifier extends StateNotifier<AsyncValue<List<SavedRepository>>>
     final api = _ref.read(githubApiProvider);
     final userId = _ref.read(userIdProvider);
     final idsNotifier = _ref.read(bookmarkedIdsProvider.notifier);
-    
+
+    // 元の状態を保存（ロールバック用）
+    final originalIds = Set<String>.from(idsNotifier.state);
+
+    // 楽観的更新
     final newIds = Set<String>.from(idsNotifier.state)..remove(repositoryId);
     idsNotifier.state = newIds;
     _updateStateOptimistically();
-    
-    await api.removeBookmark(userId, repositoryId);
+
+    // API呼び出し、失敗時はロールバック
+    final success = await api.removeBookmark(userId, repositoryId);
+    if (!success) {
+      idsNotifier.state = originalIds;
+      _updateStateOptimistically();
+    }
   }
 
   Future<void> refresh() async {

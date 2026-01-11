@@ -47,11 +47,14 @@ class LocalStorage {
     }
   }
 
-  Future<void> saveUserId(String userId) async {
+  /// Returns true if save succeeded, false if failed
+  Future<bool> saveUserId(String userId) async {
     try {
       await _userBox?.put(_userIdKey, userId);
+      return true;
     } catch (e) {
       Logger.warning(_tag, 'Failed to save userId', e);
+      return false;
     }
   }
 
@@ -64,19 +67,25 @@ class LocalStorage {
     }
   }
 
-  Future<void> saveRepository(SavedRepository repo) async {
+  /// Returns true if save succeeded, false if failed
+  Future<bool> saveRepository(SavedRepository repo) async {
     try {
       await _savedReposBox?.put(repo.repositoryId, repo);
+      return true;
     } catch (e) {
       Logger.warning(_tag, 'Failed to save repository: ${repo.repositoryId}', e);
+      return false;
     }
   }
 
-  Future<void> removeRepository(String repositoryId) async {
+  /// Returns true if removal succeeded, false if failed
+  Future<bool> removeRepository(String repositoryId) async {
     try {
       await _savedReposBox?.delete(repositoryId);
+      return true;
     } catch (e) {
       Logger.warning(_tag, 'Failed to remove repository: $repositoryId', e);
+      return false;
     }
   }
 
@@ -98,11 +107,14 @@ class LocalStorage {
     }
   }
 
-  Future<void> saveSettings(AppSettings settings) async {
+  /// Returns true if save succeeded, false if failed
+  Future<bool> saveSettings(AppSettings settings) async {
     try {
       await _settingsBox?.put(_settingsKey, settings);
+      return true;
     } catch (e) {
       Logger.warning(_tag, 'Failed to save settings', e);
+      return false;
     }
   }
 }

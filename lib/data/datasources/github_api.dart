@@ -196,7 +196,7 @@ class GitHubApi {
   }
 
   Future<List<Map<String, dynamic>>> getBookmarks(String userId) async {
-    Logger.debug(_tag, 'getBookmarks called for userId: $userId');
+    Logger.debug(_tag, 'getBookmarks called');
     
     try {
       final response = await _dio.get(

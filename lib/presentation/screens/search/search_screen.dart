@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/datasources/github_api.dart';
@@ -43,11 +44,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.l10n;
     final asyncRepos = ref.watch(trendingRepositoriesProvider(TrendingSince.daily));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search'),
+        title: Text(l10n.search),
       ),
       body: Column(
         children: [
@@ -57,7 +59,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               controller: _searchController,
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
-                hintText: 'Search repositories...',
+                hintText: l10n.searchRepositoriesHint,
                 hintStyle: AppTypography.body.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -104,7 +106,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               data: (repos) {
                 final filteredRepos = _filterRepositories(repos);
                 if (filteredRepos.isEmpty) {
-                  return _buildEmptyState();
+                  return _buildEmptyState(l10n);
                 }
                 return ListView.builder(
                   padding: const EdgeInsets.only(bottom: 16),
@@ -138,7 +140,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Failed to load repositories',
+                      l10n.failedToLoadRepositories,
                       style: AppTypography.body.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -148,7 +150,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       onPressed: () {
                         ref.invalidate(trendingRepositoriesProvider(TrendingSince.daily));
                       },
-                      child: const Text('Retry'),
+                      child: Text(l10n.retry),
                     ),
                   ],
                 ),
@@ -160,7 +162,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(AppLocalizations l10n) {
     final hasSearchQuery = _searchQuery.isNotEmpty;
     return Center(
       child: Column(
@@ -173,7 +175,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            hasSearchQuery ? 'No repositories found' : 'Search for repositories',
+            hasSearchQuery ? l10n.noRepositoriesFound : l10n.searchForRepositories,
             style: AppTypography.subtitle.copyWith(
               color: AppColors.textSecondary,
             ),
@@ -181,8 +183,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           const SizedBox(height: 8),
           Text(
             hasSearchQuery
-                ? 'Try a different search term'
-                : 'Enter a keyword to search',
+                ? l10n.tryDifferentSearchTerm
+                : l10n.enterKeywordToSearch,
             style: AppTypography.body.copyWith(
               color: AppColors.textSecondary.withOpacity(0.7),
             ),

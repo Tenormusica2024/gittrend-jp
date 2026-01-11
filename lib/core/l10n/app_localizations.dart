@@ -66,6 +66,13 @@ class AppLocalizations {
   String get couldNotOpenUrl => _get('couldNotOpenUrl');
   String get addBookmark => _get('addBookmark');
   String get removeBookmark => _get('removeBookmark');
+  String get search => _get('search');
+  String get searchRepositoriesHint => _get('searchRepositoriesHint');
+  String get failedToLoadRepositories => _get('failedToLoadRepositories');
+  String get noRepositoriesFound => _get('noRepositoriesFound');
+  String get searchForRepositories => _get('searchForRepositories');
+  String get tryDifferentSearchTerm => _get('tryDifferentSearchTerm');
+  String get enterKeywordToSearch => _get('enterKeywordToSearch');
 
   String _get(String key) {
     return _localizedValues[locale]?[key] ?? _localizedValues[AppLocale.en]![key]!;
@@ -125,6 +132,13 @@ class AppLocalizations {
       'couldNotOpenUrl': 'URLを開けませんでした',
       'addBookmark': 'ブックマークに追加',
       'removeBookmark': 'ブックマークを解除',
+      'search': '検索',
+      'searchRepositoriesHint': 'リポジトリを検索...',
+      'failedToLoadRepositories': 'リポジトリの読み込みに失敗しました',
+      'noRepositoriesFound': 'リポジトリが見つかりません',
+      'searchForRepositories': 'リポジトリを検索',
+      'tryDifferentSearchTerm': '別の検索ワードを試してください',
+      'enterKeywordToSearch': 'キーワードを入力して検索',
     },
     AppLocale.en: {
       'appTitle': 'GitTrend JP',
@@ -179,6 +193,13 @@ class AppLocalizations {
       'couldNotOpenUrl': 'Could not open URL',
       'addBookmark': 'Add bookmark',
       'removeBookmark': 'Remove bookmark',
+      'search': 'Search',
+      'searchRepositoriesHint': 'Search repositories...',
+      'failedToLoadRepositories': 'Failed to load repositories',
+      'noRepositoriesFound': 'No repositories found',
+      'searchForRepositories': 'Search for repositories',
+      'tryDifferentSearchTerm': 'Try a different search term',
+      'enterKeywordToSearch': 'Enter a keyword to search',
     },
   };
 }
