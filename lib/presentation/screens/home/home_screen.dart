@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/app_localizations.dart';
@@ -18,15 +20,30 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  Timer? _autoRefreshTimer;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _startAutoRefresh();
+  }
+
+  void _startAutoRefresh() {
+    _autoRefreshTimer = Timer.periodic(const Duration(hours: 1), (_) {
+      _refreshAllData();
+    });
+  }
+
+  void _refreshAllData() {
+    ref.invalidate(trendingRepositoriesProvider(TrendingSince.daily));
+    ref.invalidate(trendingRepositoriesProvider(TrendingSince.weekly));
+    ref.invalidate(trendingRepositoriesProvider(TrendingSince.monthly));
   }
 
   @override
   void dispose() {
+    _autoRefreshTimer?.cancel();
     _tabController.dispose();
     super.dispose();
   }
@@ -55,11 +72,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.invalidate(trendingRepositoriesProvider(TrendingSince.daily));
-              ref.invalidate(trendingRepositoriesProvider(TrendingSince.weekly));
-              ref.invalidate(trendingRepositoriesProvider(TrendingSince.monthly));
-            },
+            onPressed: _refreshAllData,
           ),
         ],
         bottom: TabBar(
