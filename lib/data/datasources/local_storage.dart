@@ -1,8 +1,10 @@
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import '../models/saved_repository.dart';
 import '../models/app_settings.dart';
+import '../../core/utils/logger.dart';
 
 class LocalStorage {
+  static const String _tag = 'LocalStorage';
   static const String _savedReposBoxName = 'saved_repositories';
   static const String _settingsBoxName = 'app_settings';
   static const String _userBoxName = 'user_data';
@@ -13,6 +15,7 @@ class LocalStorage {
     try {
       return Hive.box<SavedRepository>(_savedReposBoxName);
     } catch (e) {
+      Logger.warning(_tag, 'Failed to get saved_repositories box', e);
       return null;
     }
   }
@@ -21,6 +24,7 @@ class LocalStorage {
     try {
       return Hive.box<AppSettings>(_settingsBoxName);
     } catch (e) {
+      Logger.warning(_tag, 'Failed to get app_settings box', e);
       return null;
     }
   }
@@ -29,6 +33,7 @@ class LocalStorage {
     try {
       return Hive.box<String>(_userBoxName);
     } catch (e) {
+      Logger.warning(_tag, 'Failed to get user_data box', e);
       return null;
     }
   }
@@ -37,6 +42,7 @@ class LocalStorage {
     try {
       return _userBox?.get(_userIdKey);
     } catch (e) {
+      Logger.warning(_tag, 'Failed to get userId', e);
       return null;
     }
   }
@@ -45,7 +51,7 @@ class LocalStorage {
     try {
       await _userBox?.put(_userIdKey, userId);
     } catch (e) {
-      // Silently fail - non-critical operation
+      Logger.warning(_tag, 'Failed to save userId', e);
     }
   }
 
@@ -53,6 +59,7 @@ class LocalStorage {
     try {
       return _savedReposBox?.values.toList() ?? [];
     } catch (e) {
+      Logger.warning(_tag, 'Failed to get saved repositories', e);
       return [];
     }
   }
@@ -61,7 +68,7 @@ class LocalStorage {
     try {
       await _savedReposBox?.put(repo.repositoryId, repo);
     } catch (e) {
-      // Silently fail - will be retried on next sync
+      Logger.warning(_tag, 'Failed to save repository: ${repo.repositoryId}', e);
     }
   }
 
@@ -69,7 +76,7 @@ class LocalStorage {
     try {
       await _savedReposBox?.delete(repositoryId);
     } catch (e) {
-      // Silently fail - will be retried on next sync
+      Logger.warning(_tag, 'Failed to remove repository: $repositoryId', e);
     }
   }
 
@@ -77,6 +84,7 @@ class LocalStorage {
     try {
       return _savedReposBox?.containsKey(repositoryId) ?? false;
     } catch (e) {
+      Logger.warning(_tag, 'Failed to check if repository is saved: $repositoryId', e);
       return false;
     }
   }
@@ -85,6 +93,7 @@ class LocalStorage {
     try {
       return _settingsBox?.get(_settingsKey) ?? AppSettings();
     } catch (e) {
+      Logger.warning(_tag, 'Failed to get settings', e);
       return AppSettings();
     }
   }
@@ -93,7 +102,7 @@ class LocalStorage {
     try {
       await _settingsBox?.put(_settingsKey, settings);
     } catch (e) {
-      // Silently fail - settings will use defaults
+      Logger.warning(_tag, 'Failed to save settings', e);
     }
   }
 }

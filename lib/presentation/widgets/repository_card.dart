@@ -4,9 +4,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/logger.dart';
+import '../../core/l10n/app_localizations.dart';
 import '../../data/providers/providers.dart';
 
-class RepositoryCard extends StatelessWidget {
+class RepositoryCard extends ConsumerWidget {
   static const String _tag = 'RepositoryCard';
   
   final String fullName;
@@ -52,7 +53,7 @@ class RepositoryCard extends StatelessWidget {
         Logger.warning(_tag, 'Cannot launch URL: $urlString');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('URLを開けませんでした')),
+            SnackBar(content: Text(AppLocalizations(AppLocale.ja).couldNotOpenUrl)),
           );
         }
       }
@@ -60,14 +61,15 @@ class RepositoryCard extends StatelessWidget {
       Logger.error(_tag, 'Failed to open URL: $urlString', e, stack);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('URLを開けませんでした')),
+          SnackBar(content: Text(AppLocalizations(AppLocale.ja).couldNotOpenUrl)),
         );
       }
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.l10n;
     final displayDescription = descriptionJa ?? description;
     final isLoading = descriptionJa == null && summaryJa == null;
 
@@ -117,7 +119,7 @@ class RepositoryCard extends StatelessWidget {
             if (starsToday != null && starsToday! > 0) ...[
               const SizedBox(height: 4),
               Text(
-                '+$starsToday today',
+                l10n.starsToday(starsToday!),
                 style: AppTypography.caption.copyWith(
                   color: AppColors.success,
                 ),
@@ -134,7 +136,7 @@ class RepositoryCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Loading...',
+                    l10n.loading,
                     style: AppTypography.caption.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -169,7 +171,7 @@ class RepositoryCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'README Summary',
+                          l10n.readmeSummary,
                           style: AppTypography.caption.copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,
@@ -291,7 +293,7 @@ class _BookmarkButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isBookmarked = ref.watch(bookmarkedIdsProvider).contains(fullName);
+    final isBookmarked = ref.watch(isBookmarkedProvider(fullName));
     return Semantics(
       button: true,
       label: isBookmarked ? 'ブックマークを解除' : 'ブックマークに追加',

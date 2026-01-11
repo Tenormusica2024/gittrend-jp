@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../data/datasources/github_api.dart';
 import '../../../data/models/repository.dart';
+import '../../../data/providers/providers.dart';
 
-class RepositoryDetailScreen extends StatefulWidget {
+class RepositoryDetailScreen extends ConsumerStatefulWidget {
   final Repository repository;
 
   const RepositoryDetailScreen({
@@ -14,11 +16,10 @@ class RepositoryDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<RepositoryDetailScreen> createState() => _RepositoryDetailScreenState();
+  ConsumerState<RepositoryDetailScreen> createState() => _RepositoryDetailScreenState();
 }
 
-class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
-  final GitHubApi _api = GitHubApi();
+class _RepositoryDetailScreenState extends ConsumerState<RepositoryDetailScreen> {
   bool _isLoading = true;
   bool _hasError = false;
   String? _descriptionJa;
@@ -32,7 +33,8 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
 
   Future<void> _loadSummary() async {
     try {
-      final result = await _api.getRepoSummary(
+      final api = ref.read(githubApiProvider);
+      final result = await api.getRepoSummary(
         widget.repository.fullName,
         widget.repository.description,
       );
@@ -56,6 +58,7 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.l10n;
     final repo = widget.repository;
     return Scaffold(
       appBar: AppBar(
@@ -79,23 +82,24 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildStatsRow(repo),
+            _buildStatsRow(repo, l10n),
             const SizedBox(height: 24),
             _buildSection(
-              title: 'Description',
+              title: l10n.description,
               content: repo.description,
+              noContentText: l10n.noDescriptionAvailable,
             ),
             const SizedBox(height: 16),
-            _buildJapaneseSummarySection(),
+            _buildJapaneseSummarySection(l10n),
             const SizedBox(height: 24),
-            _buildGitHubButton(repo.url),
+            _buildGitHubButton(repo.url, l10n),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatsRow(Repository repo) {
+  Widget _buildStatsRow(Repository repo, AppLocalizations l10n) {
     return Row(
       children: [
         _buildStatChip(
@@ -107,7 +111,7 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
         if (repo.starsToday > 0)
           _buildStatChip(
             icon: Icons.trending_up,
-            label: '+${repo.starsToday} today',
+            label: l10n.starsToday(repo.starsToday),
             color: AppColors.success,
           ),
         const SizedBox(width: 12),
@@ -176,7 +180,7 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
     );
   }
 
-  Widget _buildSection({required String title, required String content}) {
+  Widget _buildSection({required String title, required String content, required String noContentText}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -188,14 +192,14 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          content.isEmpty ? 'No description available' : content,
+          content.isEmpty ? noContentText : content,
           style: AppTypography.body,
         ),
       ],
     );
   }
 
-  Widget _buildJapaneseSummarySection() {
+  Widget _buildJapaneseSummarySection(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -217,7 +221,7 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Japanese Summary',
+                l10n.japaneseSummary,
                 style: AppTypography.subtitle.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
@@ -244,7 +248,7 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '翻訳の取得に失敗しました',
+                    l10n.translationFailed,
                     style: AppTypography.caption.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -259,14 +263,14 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
                       _loadSummary();
                     },
                     icon: const Icon(Icons.refresh, size: 16),
-                    label: const Text('再試行'),
+                    label: Text(l10n.retry),
                   ),
                 ],
               ),
             )
           else ...[
             Text(
-              'Description',
+              l10n.description,
               style: AppTypography.caption.copyWith(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
@@ -274,7 +278,7 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              _descriptionJa ?? 'Translation unavailable',
+              _descriptionJa ?? l10n.translationUnavailable,
               style: AppTypography.body.copyWith(
                 color: _descriptionJa != null
                     ? AppColors.textPrimary
@@ -283,7 +287,7 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'README Summary',
+              l10n.readmeSummary,
               style: AppTypography.caption.copyWith(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
@@ -291,7 +295,7 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              _summaryJa ?? 'Summary unavailable',
+              _summaryJa ?? l10n.summaryUnavailable,
               style: AppTypography.body.copyWith(
                 color: _summaryJa != null
                     ? AppColors.textPrimary
@@ -304,13 +308,13 @@ class _RepositoryDetailScreenState extends State<RepositoryDetailScreen> {
     );
   }
 
-  Widget _buildGitHubButton(String url) {
+  Widget _buildGitHubButton(String url, AppLocalizations l10n) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: () => _launchUrl(url),
         icon: const Icon(Icons.open_in_browser),
-        label: const Text('View on GitHub'),
+        label: Text(l10n.viewOnGitHub),
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),

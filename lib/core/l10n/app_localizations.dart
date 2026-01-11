@@ -53,6 +53,19 @@ class AppLocalizations {
   String get newLabel => _get('newLabel');
   String stars(int count) => _get('stars').replaceAll('{count}', count.toString());
   String starsToday(int count) => _get('starsToday').replaceAll('{count}', count.toString());
+  String get loading => _get('loading');
+  String get readmeSummary => _get('readmeSummary');
+  String get description => _get('description');
+  String get japaneseSummary => _get('japaneseSummary');
+  String get viewOnGitHub => _get('viewOnGitHub');
+  String get noDescriptionAvailable => _get('noDescriptionAvailable');
+  String get translationFailed => _get('translationFailed');
+  String get translationUnavailable => _get('translationUnavailable');
+  String get summaryUnavailable => _get('summaryUnavailable');
+  String get retry => _get('retry');
+  String get couldNotOpenUrl => _get('couldNotOpenUrl');
+  String get addBookmark => _get('addBookmark');
+  String get removeBookmark => _get('removeBookmark');
 
   String _get(String key) {
     return _localizedValues[locale]?[key] ?? _localizedValues[AppLocale.en]![key]!;
@@ -99,6 +112,19 @@ class AppLocalizations {
       'newLabel': 'NEW',
       'stars': '{count}',
       'starsToday': '+{count} 今日',
+      'loading': '読み込み中...',
+      'readmeSummary': 'README 要約',
+      'description': '説明',
+      'japaneseSummary': '日本語要約',
+      'viewOnGitHub': 'GitHubで見る',
+      'noDescriptionAvailable': '説明がありません',
+      'translationFailed': '翻訳の取得に失敗しました',
+      'translationUnavailable': '翻訳が利用できません',
+      'summaryUnavailable': '要約が利用できません',
+      'retry': '再試行',
+      'couldNotOpenUrl': 'URLを開けませんでした',
+      'addBookmark': 'ブックマークに追加',
+      'removeBookmark': 'ブックマークを解除',
     },
     AppLocale.en: {
       'appTitle': 'GitTrend JP',
@@ -140,6 +166,19 @@ class AppLocalizations {
       'newLabel': 'NEW',
       'stars': '{count}',
       'starsToday': '+{count} today',
+      'loading': 'Loading...',
+      'readmeSummary': 'README Summary',
+      'description': 'Description',
+      'japaneseSummary': 'Japanese Summary',
+      'viewOnGitHub': 'View on GitHub',
+      'noDescriptionAvailable': 'No description available',
+      'translationFailed': 'Failed to load translation',
+      'translationUnavailable': 'Translation unavailable',
+      'summaryUnavailable': 'Summary unavailable',
+      'retry': 'Retry',
+      'couldNotOpenUrl': 'Could not open URL',
+      'addBookmark': 'Add bookmark',
+      'removeBookmark': 'Remove bookmark',
     },
   };
 }

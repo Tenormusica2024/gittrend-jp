@@ -35,6 +35,10 @@ final japaneseRepositoriesProvider = FutureProvider<List<Repository>>((ref) asyn
 
 final bookmarkedIdsProvider = StateProvider<Set<String>>((ref) => {});
 
+final isBookmarkedProvider = Provider.family<bool, String>((ref, fullName) {
+  return ref.watch(bookmarkedIdsProvider).contains(fullName);
+});
+
 final bookmarksProvider = StateNotifierProvider<BookmarksNotifier, AsyncValue<List<SavedRepository>>>(
   (ref) => BookmarksNotifier(ref),
 );
