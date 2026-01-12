@@ -39,32 +39,31 @@ class RepositoryCard extends ConsumerWidget {
     this.url,
   });
 
-  Future<void> _openGitHub(BuildContext context) async {
+  Future<void> _openGitHub(BuildContext context, AppLocalizations l10n) async {
     final urlString = url ?? 'https://github.com/$fullName';
     final uri = Uri.parse(urlString);
-    
+
     Logger.debug(_tag, 'Opening GitHub: $urlString');
-    
+
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
         Logger.info(_tag, 'Successfully opened: $urlString');
       } else {
         Logger.warning(_tag, 'Cannot launch URL: $urlString');
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations(AppLocale.ja).couldNotOpenUrl)),
-          );
-        }
+        _showUrlError(context, l10n);
       }
     } catch (e, stack) {
       Logger.error(_tag, 'Failed to open URL: $urlString', e, stack);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations(AppLocale.ja).couldNotOpenUrl)),
-        );
-      }
+      _showUrlError(context, l10n);
     }
+  }
+
+  void _showUrlError(BuildContext context, AppLocalizations l10n) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.couldNotOpenUrl)),
+    );
   }
 
   @override
@@ -88,7 +87,7 @@ class RepositoryCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => _openGitHub(context),
+                    onTap: () => _openGitHub(context, l10n),
                     child: Text(
                       fullName,
                       style: AppTypography.subtitle.copyWith(
@@ -293,10 +292,12 @@ class _BookmarkButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.l10n;
     final isBookmarked = ref.watch(isBookmarkedProvider(fullName));
+    final label = isBookmarked ? l10n.removeBookmark : l10n.addBookmark;
     return Semantics(
       button: true,
-      label: isBookmarked ? 'ブックマークを解除' : 'ブックマークに追加',
+      label: label,
       child: IconButton(
         icon: Icon(
           isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
@@ -305,7 +306,7 @@ class _BookmarkButton extends ConsumerWidget {
         onPressed: onToggle,
         // Material Design: 最小タップターゲットは48x48dp
         constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-        tooltip: isBookmarked ? 'ブックマークを解除' : 'ブックマークに追加',
+        tooltip: label,
       ),
     );
   }

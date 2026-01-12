@@ -9,6 +9,30 @@ import '../../../data/providers/providers.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
+  Future<void> _launchUrlWithErrorHandling(
+    BuildContext context,
+    AppLocalizations l10n,
+    String urlString,
+  ) async {
+    final uri = Uri.parse(urlString);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        _showUrlError(context, l10n);
+      }
+    } catch (e) {
+      _showUrlError(context, l10n);
+    }
+  }
+
+  void _showUrlError(BuildContext context, AppLocalizations l10n) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.couldNotOpenUrl)),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(appSettingsProvider);
@@ -61,11 +85,11 @@ class SettingsScreen extends ConsumerWidget {
           ),
           _LinkTile(
             title: l10n.privacyPolicy,
-            onTap: () => launchUrl(Uri.parse('https://gittrend-jp.vercel.app/privacy-policy.html')),
+            onTap: () => _launchUrlWithErrorHandling(context, l10n, 'https://gittrend-jp.vercel.app/privacy-policy.html'),
           ),
           _LinkTile(
             title: l10n.termsOfService,
-            onTap: () => launchUrl(Uri.parse('https://gittrend-jp.vercel.app/terms-of-service.html')),
+            onTap: () => _launchUrlWithErrorHandling(context, l10n, 'https://gittrend-jp.vercel.app/terms-of-service.html'),
           ),
         ],
       ),
@@ -130,77 +154,6 @@ class _LanguageTile extends StatelessWidget {
           visualDensity: VisualDensity.compact,
         ),
       ),
-    );
-  }
-}
-
-class _SwitchTile extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final bool value;
-  final bool enabled;
-  final ValueChanged<bool> onChanged;
-
-  const _SwitchTile({
-    required this.title,
-    this.subtitle,
-    required this.value,
-    this.enabled = true,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      title: Text(
-        title,
-        style: AppTypography.body.copyWith(
-          color: enabled ? AppColors.textPrimary : AppColors.textSecondary,
-        ),
-      ),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: AppTypography.caption,
-            )
-          : null,
-      value: value,
-      activeColor: AppColors.primary,
-      onChanged: enabled ? onChanged : null,
-    );
-  }
-}
-
-class _TimeTile extends StatelessWidget {
-  final String title;
-  final TimeOfDay time;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  const _TimeTile({
-    required this.title,
-    required this.time,
-    this.enabled = true,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(
-        title,
-        style: AppTypography.body.copyWith(
-          color: enabled ? AppColors.textPrimary : AppColors.textSecondary,
-        ),
-      ),
-      trailing: Text(
-        time.format(context),
-        style: AppTypography.body.copyWith(
-          color: enabled ? AppColors.primary : AppColors.textSecondary,
-        ),
-      ),
-      enabled: enabled,
-      onTap: enabled ? onTap : null,
     );
   }
 }

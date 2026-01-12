@@ -30,4 +30,22 @@ class AppSettings extends HiveObject {
     this.minimumStars = 100,
     this.japaneseOnlyNotification = false,
   });
+
+  AppSettings copyWith({
+    bool? notificationEnabled,
+    int? notificationHour,
+    int? notificationMinute,
+    String? defaultLanguageFilter,
+    int? minimumStars,
+    bool? japaneseOnlyNotification,
+  }) {
+    return AppSettings(
+      notificationEnabled: notificationEnabled ?? this.notificationEnabled,
+      notificationHour: notificationHour ?? this.notificationHour,
+      notificationMinute: notificationMinute ?? this.notificationMinute,
+      defaultLanguageFilter: defaultLanguageFilter ?? this.defaultLanguageFilter,
+      minimumStars: minimumStars ?? this.minimumStars,
+      japaneseOnlyNotification: japaneseOnlyNotification ?? this.japaneseOnlyNotification,
+    );
+  }
 }

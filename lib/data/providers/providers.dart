@@ -269,63 +269,23 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
   }
 
   Future<void> setNotificationEnabled(bool enabled) async {
-    final newSettings = AppSettings(
-      notificationEnabled: enabled,
-      notificationHour: state.notificationHour,
-      notificationMinute: state.notificationMinute,
-      defaultLanguageFilter: state.defaultLanguageFilter,
-      minimumStars: state.minimumStars,
-      japaneseOnlyNotification: state.japaneseOnlyNotification,
-    );
-    await updateSettings(newSettings);
+    await updateSettings(state.copyWith(notificationEnabled: enabled));
   }
 
   Future<void> setNotificationTime(int hour, int minute) async {
-    final newSettings = AppSettings(
-      notificationEnabled: state.notificationEnabled,
-      notificationHour: hour,
-      notificationMinute: minute,
-      defaultLanguageFilter: state.defaultLanguageFilter,
-      minimumStars: state.minimumStars,
-      japaneseOnlyNotification: state.japaneseOnlyNotification,
-    );
-    await updateSettings(newSettings);
+    await updateSettings(state.copyWith(notificationHour: hour, notificationMinute: minute));
   }
 
   Future<void> setJapaneseOnlyNotification(bool value) async {
-    final newSettings = AppSettings(
-      notificationEnabled: state.notificationEnabled,
-      notificationHour: state.notificationHour,
-      notificationMinute: state.notificationMinute,
-      defaultLanguageFilter: state.defaultLanguageFilter,
-      minimumStars: state.minimumStars,
-      japaneseOnlyNotification: value,
-    );
-    await updateSettings(newSettings);
+    await updateSettings(state.copyWith(japaneseOnlyNotification: value));
   }
 
   Future<void> setDefaultLanguage(String? language) async {
-    final newSettings = AppSettings(
-      notificationEnabled: state.notificationEnabled,
-      notificationHour: state.notificationHour,
-      notificationMinute: state.notificationMinute,
-      defaultLanguageFilter: language,
-      minimumStars: state.minimumStars,
-      japaneseOnlyNotification: state.japaneseOnlyNotification,
-    );
-    await updateSettings(newSettings);
+    await updateSettings(state.copyWith(defaultLanguageFilter: language));
   }
 
   Future<void> setMinimumStars(int value) async {
-    final newSettings = AppSettings(
-      notificationEnabled: state.notificationEnabled,
-      notificationHour: state.notificationHour,
-      notificationMinute: state.notificationMinute,
-      defaultLanguageFilter: state.defaultLanguageFilter,
-      minimumStars: value,
-      japaneseOnlyNotification: state.japaneseOnlyNotification,
-    );
-    await updateSettings(newSettings);
+    await updateSettings(state.copyWith(minimumStars: value));
   }
 }
 
