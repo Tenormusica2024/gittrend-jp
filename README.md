@@ -37,9 +37,53 @@ flutter pub get
 # 開発サーバー起動
 flutter run
 
-# ビルド
+# ローカルビルド
 flutter build apk --release
+flutter build web --release
 ```
+
+## デプロイ
+
+### Web (Vercel)
+
+```bash
+# Webビルド
+flutter build web --release
+
+# Vercelにデプロイ
+npx vercel --prod --yes
+```
+
+**本番URL**: https://gittrend-jp.vercel.app/
+
+### Android (Google Play Store)
+
+GitHub Actionsで自動デプロイ。タグをプッシュするとトリガーされる。
+
+```bash
+# 1. pubspec.yamlのバージョンを更新
+# version: 1.0.X+Y
+
+# 2. コミット
+git add pubspec.yaml
+git commit -m "chore: bump version to 1.0.X+Y"
+
+# 3. タグ作成＆プッシュ
+git tag -a v1.0.X -m "Release v1.0.X: 変更内容"
+git push && git push origin v1.0.X
+```
+
+**GitHub Actions確認**:
+```bash
+gh run list --repo Tenormusica2024/gittrend-jp --limit 3
+```
+
+**必要なGitHub Secrets**:
+- `KEYSTORE_BASE64` - キーストアのBase64エンコード
+- `KEY_STORE_PASSWORD` - キーストアパスワード
+- `KEY_PASSWORD` - キーパスワード
+- `KEY_ALIAS` - キーエイリアス
+- `PLAY_STORE_SERVICE_ACCOUNT_JSON` - Play Store APIサービスアカウント
 
 ## ライセンス
 
