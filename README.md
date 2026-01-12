@@ -122,3 +122,31 @@ MIT License
 - **旧バージョンのAABを削除する**: 新しいAABをアップロードする際、リリースに旧バージョンが残っているとエラーになる
 - エラーメッセージ: 「このAPKは、バージョンコードがより高い1つ以上のAPKで完全にブロックされているため、ユーザーに配信されません」
 - **対処法**: リリース作成画面で旧バージョンのAAB/APKを削除し、新バージョンのみを残す
+
+### GitHub Actions ビルド後のAAB取得
+
+- **ローカルの`release-artifacts/`フォルダは自動更新されない**: GitHub Actionsはリモートで実行されるため、ビルド成果物はGitHubのアーティファクトとして保存される
+- **取得手順**:
+  1. https://github.com/tenormusica2024/gittrend-jp/actions にアクセス
+  2. 「Build Release AAB」（緑チェック）をクリック
+  3. 下部の「Artifacts」から`release-aab`をダウンロード
+  4. ZIPを解凍して`app-release.aab`を取得
+- **注意**: ダウンロードしたZIP内のファイルのタイムスタンプがUTC表示になる場合がある（日本時間より9時間前に見える）
+
+### url_launcher（外部リンク）設定
+
+- **Android 11以降**: `AndroidManifest.xml`に`<queries>`を追加しないと外部URLが開けない
+- 設定場所: `android/app/src/main/AndroidManifest.xml`
+- 必要な設定:
+  ```xml
+  <queries>
+      <intent>
+          <action android:name="android.intent.action.VIEW"/>
+          <data android:scheme="https"/>
+      </intent>
+      <intent>
+          <action android:name="android.intent.action.VIEW"/>
+          <data android:scheme="http"/>
+      </intent>
+  </queries>
+  ```
