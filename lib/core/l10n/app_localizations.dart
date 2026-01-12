@@ -73,6 +73,10 @@ class AppLocalizations {
   String get searchForRepositories => _get('searchForRepositories');
   String get tryDifferentSearchTerm => _get('tryDifferentSearchTerm');
   String get enterKeywordToSearch => _get('enterKeywordToSearch');
+  String get connectionError => _get('connectionError');
+  String get serverError => _get('serverError');
+  String get genericError => _get('genericError');
+  String get errorOccurred => _get('errorOccurred');
 
   String _get(String key) {
     return _localizedValues[locale]?[key] ?? _localizedValues[AppLocale.en]![key]!;
@@ -139,6 +143,10 @@ class AppLocalizations {
       'searchForRepositories': 'リポジトリを検索',
       'tryDifferentSearchTerm': '別の検索ワードを試してください',
       'enterKeywordToSearch': 'キーワードを入力して検索',
+      'connectionError': 'ネットワーク接続を確認してください',
+      'serverError': 'サーバーエラーが発生しました',
+      'genericError': 'データの取得に失敗しました',
+      'errorOccurred': 'エラーが発生しました',
     },
     AppLocale.en: {
       'appTitle': 'GitTrend JP',
@@ -200,6 +208,10 @@ class AppLocalizations {
       'searchForRepositories': 'Search for repositories',
       'tryDifferentSearchTerm': 'Try a different search term',
       'enterKeywordToSearch': 'Enter a keyword to search',
+      'connectionError': 'Please check your network connection',
+      'serverError': 'A server error occurred',
+      'genericError': 'Failed to load data',
+      'errorOccurred': 'An error occurred',
     },
   };
 }

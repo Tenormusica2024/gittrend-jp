@@ -154,7 +154,7 @@ class _TrendingList extends ConsumerWidget {
       message = error.message;
       icon = Icons.warning_amber;
     } else {
-      message = 'データの取得に失敗しました';
+      message = l10n.genericError;
       icon = Icons.error;
     }
     
@@ -183,7 +183,7 @@ class _TrendingList extends ConsumerWidget {
                 ref.invalidate(trendingRepositoriesProvider(since));
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('再試行'),
+              label: Text(l10n.retry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
