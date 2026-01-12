@@ -303,8 +303,8 @@ class _BookmarkButton extends ConsumerWidget {
           color: isBookmarked ? AppColors.primary : AppColors.textSecondary,
         ),
         onPressed: onToggle,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(),
+        // Material Design: 最小タップターゲットは48x48dp
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
         tooltip: isBookmarked ? 'ブックマークを解除' : 'ブックマークに追加',
       ),
     );

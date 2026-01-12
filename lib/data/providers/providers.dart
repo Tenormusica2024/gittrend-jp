@@ -46,6 +46,10 @@ final bookmarksProvider = StateNotifierProvider<BookmarksNotifier, AsyncValue<Li
 class BookmarksNotifier extends StateNotifier<AsyncValue<List<SavedRepository>>> {
   final Ref _ref;
 
+  // レート制限: 連続リクエストを防止
+  DateTime? _lastRequestTime;
+  static const _minRequestInterval = Duration(milliseconds: 500);
+
   BookmarksNotifier(this._ref) : super(const AsyncValue.loading()) {
     _loadBookmarks();
   }
@@ -79,44 +83,66 @@ class BookmarksNotifier extends StateNotifier<AsyncValue<List<SavedRepository>>>
   }
 
   Future<void> toggleBookmark(Repository repo) async {
+    // レート制限チェック
+    final now = DateTime.now();
+    if (_lastRequestTime != null &&
+        now.difference(_lastRequestTime!) < _minRequestInterval) {
+      return; // 連続リクエストを無視
+    }
+    _lastRequestTime = now;
+
     final api = _ref.read(githubApiProvider);
     final userId = _ref.read(userIdProvider);
     final idsNotifier = _ref.read(bookmarkedIdsProvider.notifier);
-    
+
     final wasBookmarked = idsNotifier.state.contains(repo.fullName);
-    
-    if (wasBookmarked) {
-      final newIds = Set<String>.from(idsNotifier.state)..remove(repo.fullName);
-      idsNotifier.state = newIds;
-      _updateStateOptimistically();
-      
-      final success = await api.removeBookmark(userId, repo.fullName);
-      if (!success) {
-        idsNotifier.state = Set<String>.from(idsNotifier.state)..add(repo.fullName);
+
+    // 元の状態を保存（エラー時のロールバック用）
+    final originalIds = Set<String>.from(idsNotifier.state);
+
+    try {
+      if (wasBookmarked) {
+        final newIds = Set<String>.from(idsNotifier.state)..remove(repo.fullName);
+        idsNotifier.state = newIds;
         _updateStateOptimistically();
+
+        final success = await api.removeBookmark(userId, repo.fullName);
+        if (!success) {
+          idsNotifier.state = originalIds;
+          _updateStateOptimistically();
+        }
+      } else {
+        final newIds = Set<String>.from(idsNotifier.state)..add(repo.fullName);
+        idsNotifier.state = newIds;
+
+        final newBookmark = SavedRepository(
+          repositoryId: repo.fullName,
+          savedAt: DateTime.now(),
+          name: repo.fullName,
+          description: repo.description,
+          stars: repo.stars,
+          language: repo.language,
+          url: repo.url,
+          descriptionJa: repo.descriptionJa,
+          summaryJa: repo.summaryJa,
+        );
+        _addToStateOptimistically(newBookmark);
+
+        final success = await api.addBookmark(userId, repo);
+        if (!success) {
+          idsNotifier.state = originalIds;
+          _removeFromStateOptimistically(repo.fullName);
+        }
       }
-    } else {
-      final newIds = Set<String>.from(idsNotifier.state)..add(repo.fullName);
-      idsNotifier.state = newIds;
-      
-      final newBookmark = SavedRepository(
-        repositoryId: repo.fullName,
-        savedAt: DateTime.now(),
-        name: repo.fullName,
-        description: repo.description,
-        stars: repo.stars,
-        language: repo.language,
-        url: repo.url,
-        descriptionJa: repo.descriptionJa,
-        summaryJa: repo.summaryJa,
-      );
-      _addToStateOptimistically(newBookmark);
-      
-      final success = await api.addBookmark(userId, repo);
-      if (!success) {
-        idsNotifier.state = Set<String>.from(idsNotifier.state)..remove(repo.fullName);
+    } catch (e) {
+      // エラー発生時は元の状態にロールバック
+      idsNotifier.state = originalIds;
+      if (wasBookmarked) {
+        _updateStateOptimistically();
+      } else {
         _removeFromStateOptimistically(repo.fullName);
       }
+      rethrow;
     }
   }
 

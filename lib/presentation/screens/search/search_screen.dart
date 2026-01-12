@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/app_localizations.dart';
@@ -18,16 +20,23 @@ class SearchScreen extends ConsumerStatefulWidget {
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  Timer? _debounceTimer;
+
+  static const _debounceDuration = Duration(milliseconds: 300);
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   void _onSearchChanged(String query) {
-    setState(() {
-      _searchQuery = query.toLowerCase();
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(_debounceDuration, () {
+      setState(() {
+        _searchQuery = query.toLowerCase();
+      });
     });
   }
 

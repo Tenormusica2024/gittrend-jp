@@ -30,30 +30,10 @@ class SettingsScreen extends ConsumerWidget {
             },
           ),
           const Divider(),
-          _SectionHeader(title: l10n.notifications),
-          _SwitchTile(
-            title: l10n.dailyTrendingAlert,
-            subtitle: l10n.dailyTrendingAlertDesc,
-            value: settings.notificationEnabled,
-            onChanged: (value) {
-              ref.read(appSettingsProvider.notifier).setNotificationEnabled(value);
-            },
-          ),
-          _TimeTile(
-            title: l10n.notificationTime,
-            time: TimeOfDay(hour: settings.notificationHour, minute: settings.notificationMinute),
-            enabled: settings.notificationEnabled,
-            onTap: () async {
-              final time = await showTimePicker(
-                context: context,
-                initialTime: TimeOfDay(hour: settings.notificationHour, minute: settings.notificationMinute),
-              );
-              if (time != null) {
-                ref.read(appSettingsProvider.notifier).setNotificationTime(time.hour, time.minute);
-              }
-            },
-          ),
-          const Divider(),
+          // TODO: 通知機能実装後にUIを復活させる
+          // _SectionHeader(title: l10n.notifications),
+          // _SwitchTile(...),
+          // _TimeTile(...),
           _SectionHeader(title: l10n.filters),
           _SelectTile(
             title: l10n.defaultLanguage,
