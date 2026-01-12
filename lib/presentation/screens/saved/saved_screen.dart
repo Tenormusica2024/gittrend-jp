@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/errors/api_exception.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../data/providers/providers.dart';
+import '../../widgets/error_view.dart';
 import '../../widgets/repository_card.dart';
 
 class SavedScreen extends ConsumerWidget {
@@ -27,7 +26,11 @@ class SavedScreen extends ConsumerWidget {
       ),
       body: bookmarksState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _buildErrorView(context, ref, e, l10n),
+        error: (e, _) => ErrorView(
+          error: e,
+          l10n: l10n,
+          onRetry: () => ref.read(bookmarksProvider.notifier).refresh(),
+        ),
         data: (savedRepositories) => savedRepositories.isEmpty
             ? Center(
                 child: Column(
@@ -70,9 +73,16 @@ class SavedScreen extends ConsumerWidget {
                       stars: saved.stars ?? 0,
                       language: saved.language,
                       tags: const [],
-                      isSaved: true,
-                      onSaveToggle: () {
-                        ref.read(bookmarksProvider.notifier).removeBookmark(saved.repositoryId);
+                      onSaveToggle: () async {
+                        try {
+                          await ref.read(bookmarksProvider.notifier).removeBookmark(saved.repositoryId);
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(l10n.bookmarkError)),
+                            );
+                          }
+                        }
                       },
                       descriptionJa: saved.descriptionJa,
                       summaryJa: saved.summaryJa,
@@ -81,60 +91,6 @@ class SavedScreen extends ConsumerWidget {
                   },
                 ),
               ),
-      ),
-    );
-  }
-
-  Widget _buildErrorView(BuildContext context, WidgetRef ref, Object error, AppLocalizations l10n) {
-    String message;
-    IconData icon;
-
-    if (error is ApiConnectionException) {
-      message = l10n.connectionError;
-      icon = Icons.wifi_off;
-    } else if (error is ApiServerException) {
-      message = l10n.serverError;
-      icon = Icons.cloud_off;
-    } else if (error is ApiException) {
-      message = error.message;
-      icon = Icons.warning_amber;
-    } else {
-      message = l10n.genericError;
-      icon = Icons.error;
-    }
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 64,
-              color: AppColors.textSecondary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              message,
-              style: AppTypography.body.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => ref.read(bookmarksProvider.notifier).refresh(),
-              icon: const Icon(Icons.refresh),
-              label: Text(l10n.retry),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

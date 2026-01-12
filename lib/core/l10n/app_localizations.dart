@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum AppLocale { ja, en }
@@ -9,10 +8,6 @@ class AppLocalizations {
   final AppLocale locale;
 
   AppLocalizations(this.locale);
-
-  static AppLocalizations of(BuildContext context) {
-    return AppLocalizations(AppLocale.ja);
-  }
 
   String get appTitle => _get('appTitle');
   String get today => _get('today');
@@ -77,6 +72,7 @@ class AppLocalizations {
   String get serverError => _get('serverError');
   String get genericError => _get('genericError');
   String get errorOccurred => _get('errorOccurred');
+  String get bookmarkError => _get('bookmarkError');
 
   String _get(String key) {
     return _localizedValues[locale]?[key] ?? _localizedValues[AppLocale.en]![key]!;
@@ -147,6 +143,7 @@ class AppLocalizations {
       'serverError': 'サーバーエラーが発生しました',
       'genericError': 'データの取得に失敗しました',
       'errorOccurred': 'エラーが発生しました',
+      'bookmarkError': 'ブックマーク操作に失敗しました',
     },
     AppLocale.en: {
       'appTitle': 'GitTrend JP',
@@ -212,6 +209,7 @@ class AppLocalizations {
       'serverError': 'A server error occurred',
       'genericError': 'Failed to load data',
       'errorOccurred': 'An error occurred',
+      'bookmarkError': 'Bookmark operation failed',
     },
   };
 }

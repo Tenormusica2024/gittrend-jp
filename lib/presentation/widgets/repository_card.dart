@@ -16,7 +16,6 @@ class RepositoryCard extends ConsumerWidget {
   final int? starsToday;
   final String? language;
   final List<String> tags;
-  final bool isSaved;
   final VoidCallback? onTap;
   final VoidCallback? onSaveToggle;
   final String? descriptionJa;
@@ -31,7 +30,6 @@ class RepositoryCard extends ConsumerWidget {
     this.starsToday,
     this.language,
     this.tags = const [],
-    this.isSaved = false,
     this.onTap,
     this.onSaveToggle,
     this.descriptionJa,

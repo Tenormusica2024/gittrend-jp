@@ -54,10 +54,6 @@ class SettingsScreen extends ConsumerWidget {
             },
           ),
           const Divider(),
-          // TODO: 通知機能実装後にUIを復活させる
-          // _SectionHeader(title: l10n.notifications),
-          // _SwitchTile(...),
-          // _TimeTile(...),
           _SectionHeader(title: l10n.filters),
           _SelectTile(
             title: l10n.defaultLanguage,

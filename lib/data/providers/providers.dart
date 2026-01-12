@@ -182,11 +182,18 @@ class BookmarksNotifier extends StateNotifier<AsyncValue<List<SavedRepository>>>
     idsNotifier.state = newIds;
     _updateStateOptimistically();
 
-    // API呼び出し、失敗時はロールバック
-    final success = await api.removeBookmark(userId, repositoryId);
-    if (!success) {
+    try {
+      // API呼び出し、失敗時はロールバック
+      final success = await api.removeBookmark(userId, repositoryId);
+      if (!success) {
+        idsNotifier.state = originalIds;
+        _updateStateOptimistically();
+      }
+    } catch (e) {
+      // エラー発生時は元の状態にロールバック
       idsNotifier.state = originalIds;
       _updateStateOptimistically();
+      rethrow;
     }
   }
 
