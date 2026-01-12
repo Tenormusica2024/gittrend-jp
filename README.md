@@ -92,3 +92,27 @@ MIT License
 ---
 
 *Created: 2026-01-05*
+
+## 重要な注意事項
+
+### バージョン更新時のチェックリスト
+
+1. **pubspec.yaml**: `version: X.X.X+Y` を更新
+2. **settings_screen.dart**: `value: 'X.X.X'` のバージョン表示も手動更新が必要
+3. **ビルド番号(+Y)**: Google Playは前回より大きい数値が必要
+
+### ローカル環境の注意
+
+- **Flutter SDKがPATHに設定されていない**: Android StudioのGUIビルドまたはGitHub Actionsを使用
+- **Android StudioのBuildメニューがグレーアウト**: Flutter Pluginが未設定の可能性。GitHub Actionsでビルド推奨
+
+### Closed Test (テスター配布)
+
+1. Google Groups: https://groups.google.com/g/gittrend-jp-testers
+2. テスター登録URL: https://play.google.com/apps/testing/com.gittrend.gittrend_jp
+3. **重要**: テスターはPCブラウザでテスター登録 → その後スマホでダウンロード
+
+### アイコン設定
+
+- Adaptive Icon対応済み（Android 8.0+）
+- アイコン変更時は `android/app/src/main/res/mipmap-*/` の全画像を更新
