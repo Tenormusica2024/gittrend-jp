@@ -6,6 +6,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/repository.dart';
 import '../../../data/providers/providers.dart';
+import '../../../core/utils/format_utils.dart';
+import '../../widgets/language_tag.dart';
+// Result型は api.getRepoSummary() の戻り値型から自動推論される
 
 class RepositoryDetailScreen extends ConsumerStatefulWidget {
   final Repository repository;
@@ -32,27 +35,28 @@ class _RepositoryDetailScreenState extends ConsumerState<RepositoryDetailScreen>
   }
 
   Future<void> _loadSummary() async {
-    try {
-      final api = ref.read(githubApiProvider);
-      final result = await api.getRepoSummary(
-        widget.repository.fullName,
-        widget.repository.description,
-      );
-      if (mounted) {
-        setState(() {
-          _descriptionJa = result['descriptionJa'];
-          _summaryJa = result['summaryJa'];
-          _isLoading = false;
-          _hasError = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _hasError = true;
-        });
-      }
+    final api = ref.read(githubApiProvider);
+    final result = await api.getRepoSummary(
+      widget.repository.fullName,
+      widget.repository.description,
+    );
+
+    if (!mounted) return;
+
+    // Result型で成功/失敗を判定
+    if (result.isSuccess && result.dataOrNull != null) {
+      final data = result.dataOrNull!;
+      setState(() {
+        _descriptionJa = data['descriptionJa'];
+        _summaryJa = data['summaryJa'];
+        _isLoading = false;
+        _hasError = false;
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
     }
   }
 
@@ -104,7 +108,7 @@ class _RepositoryDetailScreenState extends ConsumerState<RepositoryDetailScreen>
       children: [
         _buildStatChip(
           icon: Icons.star_rounded,
-          label: _formatNumber(repo.stars),
+          label: formatNumber(repo.stars),
           color: AppColors.star,
         ),
         const SizedBox(width: 12),
@@ -116,7 +120,7 @@ class _RepositoryDetailScreenState extends ConsumerState<RepositoryDetailScreen>
           ),
         const SizedBox(width: 12),
         if (repo.language != null)
-          _buildLanguageChip(repo.language!),
+          LanguageTag(language: repo.language!),
       ],
     );
   }
@@ -142,37 +146,6 @@ class _RepositoryDetailScreenState extends ConsumerState<RepositoryDetailScreen>
             style: AppTypography.caption.copyWith(
               color: color,
               fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLanguageChip(String language) {
-    final color = AppColors.languageColors[language] ?? AppColors.textSecondary;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            language,
-            style: AppTypography.caption.copyWith(
-              color: AppColors.textPrimary,
             ),
           ),
         ],
@@ -323,16 +296,24 @@ class _RepositoryDetailScreenState extends ConsumerState<RepositoryDetailScreen>
   }
 
   Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final l10n = ref.read(localeProvider.notifier).state;
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations(l10n).couldNotOpenUrl)),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations(l10n).couldNotOpenUrl)),
+        );
+      }
     }
-  }
-
-  String _formatNumber(int number) {
-    if (number >= 1000) {
-      return '${(number / 1000).toStringAsFixed(1)}k';
-    }
-    return number.toString();
   }
 }

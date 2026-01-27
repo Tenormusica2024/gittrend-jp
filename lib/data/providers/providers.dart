@@ -5,17 +5,53 @@ import '../datasources/local_storage.dart';
 import '../models/repository.dart';
 import '../models/saved_repository.dart';
 import '../models/app_settings.dart';
+import '../../core/utils/logger.dart';
+import '../../core/utils/result.dart';
+import '../../main.dart' show initializedUserIdProvider;
+
+/// レート制限例外: 連続操作を防止するために投げられる
+class RateLimitedException implements Exception {
+  final Duration remainingTime;
+  RateLimitedException(this.remainingTime);
+
+  @override
+  String toString() => 'Rate limited. Please wait ${remainingTime.inMilliseconds}ms';
+}
+
+/// ストレージ保存失敗例外
+class StorageSaveException implements Exception {
+  final String operation;
+  StorageSaveException(this.operation);
+
+  @override
+  String toString() => 'Storage save failed: $operation';
+}
 
 final githubApiProvider = Provider<GitHubApi>((ref) => GitHubApi());
 
 final localStorageProvider = Provider<LocalStorage>((ref) => LocalStorage());
 
-final userIdProvider = StateProvider<String>((ref) {
+/// userIdProvider: main()で初期化されたuserIdを優先使用
+/// main()での初期化に失敗した場合のみ、ここでフォールバック生成
+final userIdProvider = Provider<String>((ref) {
+  // main()から注入されたuserIdを優先
+  final initializedUserId = ref.watch(initializedUserIdProvider);
+  if (initializedUserId != null && initializedUserId.isNotEmpty) {
+    return initializedUserId;
+  }
+
+  // フォールバック: main()での初期化が失敗した場合
+  Logger.warning('userIdProvider', 'Using fallback userId generation (main initialization may have failed)');
   final storage = ref.watch(localStorageProvider);
   var userId = storage.getUserId();
-  if (userId == null) {
+  if (userId == null || userId.isEmpty) {
     userId = const Uuid().v4();
-    storage.saveUserId(userId);
+    // 非同期保存を試行（失敗してもログのみ）
+    storage.saveUserId(userId).then((success) {
+      if (!success) {
+        Logger.warning('userIdProvider', 'Failed to save fallback userId');
+      }
+    });
   }
   return userId;
 });
@@ -56,38 +92,43 @@ class BookmarksNotifier extends StateNotifier<AsyncValue<List<SavedRepository>>>
 
   Future<void> _loadBookmarks() async {
     state = const AsyncValue.loading();
-    try {
-      final api = _ref.read(githubApiProvider);
-      final userId = _ref.read(userIdProvider);
-      final bookmarksData = await api.getBookmarks(userId);
-      
-      final bookmarks = bookmarksData.map((data) => SavedRepository(
-        repositoryId: data['repositoryId'] ?? data['fullName'] ?? '',
-        savedAt: data['savedAt'] != null 
-          ? DateTime.tryParse(data['savedAt']) ?? DateTime.now()
-          : DateTime.now(),
-        name: data['fullName'] ?? data['name'],
-        description: data['description'],
-        stars: data['stars'],
-        language: data['language'],
-        url: data['url'],
-        descriptionJa: data['descriptionJa'],
-        summaryJa: data['summaryJa'],
-      )).toList();
-      
-      _ref.read(bookmarkedIdsProvider.notifier).state = bookmarks.map((b) => b.repositoryId).toSet();
-      state = AsyncValue.data(bookmarks);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
+    final api = _ref.read(githubApiProvider);
+    final userId = _ref.read(userIdProvider);
+    final result = await api.getBookmarks(userId);
+
+    // Result型で成功/失敗を明確に判定
+    switch (result) {
+      case Success(data: final bookmarksData):
+        final bookmarks = bookmarksData.map((data) => SavedRepository(
+          repositoryId: data['repositoryId'] ?? data['fullName'] ?? '',
+          savedAt: data['savedAt'] != null
+            ? DateTime.tryParse(data['savedAt']) ?? DateTime.now()
+            : DateTime.now(),
+          name: data['fullName'] ?? data['name'],
+          description: data['description'],
+          stars: data['stars'],
+          language: data['language'],
+          url: data['url'],
+          descriptionJa: data['descriptionJa'],
+          summaryJa: data['summaryJa'],
+        )).toList();
+
+        _ref.read(bookmarkedIdsProvider.notifier).state = bookmarks.map((b) => b.repositoryId).toSet();
+        state = AsyncValue.data(bookmarks);
+
+      case Failure(message: final msg, error: final e, stackTrace: final st):
+        Logger.error('BookmarksNotifier', 'Failed to load bookmarks: $msg', e);
+        state = AsyncValue.error(e ?? msg, st ?? StackTrace.current);
     }
   }
 
   Future<void> toggleBookmark(Repository repo) async {
-    // レート制限チェック
+    // レート制限チェック（サイレント無視ではなく例外を投げてUIに通知）
     final now = DateTime.now();
     if (_lastRequestTime != null &&
         now.difference(_lastRequestTime!) < _minRequestInterval) {
-      return; // 連続リクエストを無視
+      final remaining = _minRequestInterval - now.difference(_lastRequestTime!);
+      throw RateLimitedException(remaining);
     }
     _lastRequestTime = now;
 
@@ -222,32 +263,50 @@ class SavedRepositoriesNotifier extends StateNotifier<List<SavedRepository>> {
   }
 
   Future<void> toggleSave(Repository repo) async {
-    if (_storage.isRepositorySaved(repo.id)) {
-      await _storage.removeRepository(repo.id);
+    bool success;
+    // ID基準をfullNameに統一（BookmarksNotifierと一貫性を保つ）
+    final repositoryId = repo.fullName;
+    if (_storage.isRepositorySaved(repositoryId)) {
+      success = await _storage.removeRepository(repositoryId);
     } else {
-      await _storage.saveRepository(SavedRepository(
-        repositoryId: repo.id,
+      success = await _storage.saveRepository(SavedRepository(
+        repositoryId: repositoryId,
         savedAt: DateTime.now(),
-        name: repo.name,
+        name: repo.fullName,
         description: repo.description,
         stars: repo.stars,
         language: repo.language,
         url: repo.url,
+        descriptionJa: repo.descriptionJa,
+        summaryJa: repo.summaryJa,
       ));
+    }
+    if (!success) {
+      throw StorageSaveException('toggleSave');
     }
     _loadSavedRepositories();
   }
 
   Future<void> removeSaved(String repositoryId) async {
-    await _storage.removeRepository(repositoryId);
+    final success = await _storage.removeRepository(repositoryId);
+    if (!success) {
+      throw StorageSaveException('removeSaved');
+    }
     _loadSavedRepositories();
   }
 
   Future<void> clearAll() async {
+    bool anyFailed = false;
     for (final saved in state) {
-      await _storage.removeRepository(saved.repositoryId);
+      final success = await _storage.removeRepository(saved.repositoryId);
+      if (!success) {
+        anyFailed = true;
+      }
     }
     _loadSavedRepositories();
+    if (anyFailed) {
+      throw StorageSaveException('clearAll');
+    }
   }
 
   bool isSaved(String repositoryId) {
@@ -271,7 +330,10 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
   }
 
   Future<void> updateSettings(AppSettings settings) async {
-    await _storage.saveSettings(settings);
+    final success = await _storage.saveSettings(settings);
+    if (!success) {
+      throw StorageSaveException('updateSettings');
+    }
     state = settings;
   }
 
@@ -297,3 +359,10 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
 }
 
 final selectedTabProvider = StateProvider<int>((ref) => 0);
+
+/// Pull-to-Refresh レート制限用のプロバイダー
+/// 各タブ(TrendingSince)ごとの最終リフレッシュ時刻を管理
+final lastRefreshTimeProvider = StateProvider.family<DateTime?, TrendingSince>((ref, since) => null);
+
+/// リフレッシュ間隔の最小値（秒）
+const int minRefreshIntervalSeconds = 10;

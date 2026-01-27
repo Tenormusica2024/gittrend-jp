@@ -3,6 +3,7 @@ import '../models/repository.dart';
 import '../../core/config/environment.dart';
 import '../../core/utils/logger.dart';
 import '../../core/errors/api_exception.dart';
+import '../../core/utils/result.dart';
 
 enum TrendingSince { daily, weekly, monthly }
 
@@ -164,9 +165,11 @@ class GitHubApi {
     );
   }
 
-  Future<Map<String, String?>> getRepoSummary(String fullName, String description) async {
+  /// リポジトリのサマリー（日本語翻訳）を取得
+  /// Result型で成功/失敗を明確に区別
+  Future<Result<Map<String, String?>>> getRepoSummary(String fullName, String description) async {
     Logger.debug(_tag, 'getRepoSummary called for: $fullName');
-    
+
     try {
       final response = await _dio.get(
         Environment.summaryUrl,
@@ -181,40 +184,43 @@ class GitHubApi {
       if (response.statusCode == 200 && response.data['success'] == true) {
         final data = response.data['data'];
         Logger.info(_tag, 'getRepoSummary success for: $fullName');
-        return {
-          'descriptionJa': data['descriptionJa'],
-          'summaryJa': data['readmeSummaryJa'],
-        };
+        return Success({
+          'descriptionJa': data['descriptionJa'] as String?,
+          'summaryJa': data['readmeSummaryJa'] as String?,
+        });
       }
-      
+
       Logger.warning(_tag, 'getRepoSummary: Unsuccessful response for $fullName');
-      return {'descriptionJa': null, 'summaryJa': null};
+      return const Failure('APIからの応答が不正です');
     } on DioException catch (e, stack) {
       Logger.error(_tag, 'getRepoSummary error for $fullName', e, stack);
-      return {'descriptionJa': null, 'summaryJa': null};
+      return Failure('サマリーの取得に失敗しました', error: e, stackTrace: stack);
     }
   }
 
-  Future<List<Map<String, dynamic>>> getBookmarks(String userId) async {
+  /// ブックマーク一覧を取得
+  /// Result型で成功（データあり/なし）と失敗を明確に区別
+  Future<Result<List<Map<String, dynamic>>>> getBookmarks(String userId) async {
     Logger.debug(_tag, 'getBookmarks called');
-    
+
     try {
       final response = await _dio.get(
         Environment.getBookmarksUrl,
         queryParameters: {'userId': userId},
       );
-      
+
       if (response.statusCode == 200 && response.data['success'] == true) {
         final bookmarks = List<Map<String, dynamic>>.from(response.data['data'] ?? []);
         Logger.info(_tag, 'getBookmarks success: ${bookmarks.length} items');
-        return bookmarks;
+        // 空リストも「成功」として返す（データなしと失敗を区別）
+        return Success(bookmarks);
       }
-      
+
       Logger.warning(_tag, 'getBookmarks: Unsuccessful response');
-      return [];
+      return const Failure('ブックマークの取得に失敗しました');
     } on DioException catch (e, stack) {
       Logger.error(_tag, 'getBookmarks error', e, stack);
-      throw ApiException('ブックマークの取得に失敗しました。', originalError: e);
+      return Failure('ブックマークの取得に失敗しました', error: e, stackTrace: stack);
     }
   }
 
