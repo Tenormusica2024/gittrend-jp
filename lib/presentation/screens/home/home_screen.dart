@@ -8,7 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../data/datasources/github_api.dart';
 import '../../widgets/error_view.dart';
 import '../../../data/models/repository.dart';
-import '../../../data/providers/providers.dart';
+import '../../../data/providers/providers.dart' show RateLimitedException, bookmarksProvider, trendingRepositoriesProvider, lastRefreshTimeProvider, minRefreshIntervalSeconds;
 import '../../widgets/repository_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -144,7 +144,26 @@ class _TrendingList extends ConsumerWidget {
   Widget _buildList(BuildContext context, WidgetRef ref, List<Repository> repos, String title, AppLocalizations l10n) {
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(trendingRepositoriesProvider(since));
+        final lastRefresh = ref.read(lastRefreshTimeProvider(since));
+        final now = DateTime.now();
+
+        if (lastRefresh != null) {
+          final elapsed = now.difference(lastRefresh).inSeconds;
+          if (elapsed < minRefreshIntervalSeconds) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.refreshCooldown)),
+              );
+            }
+            return;
+          }
+        }
+
+        ref.read(lastRefreshTimeProvider(since).notifier).state = now;
+        // ref.refresh() を使用してデータ取得完了を待機
+        // これによりRefreshIndicatorが正しくローディング状態を維持する
+        // ignore: unused_result
+        await ref.refresh(trendingRepositoriesProvider(since).future);
       },
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -164,6 +183,12 @@ class _TrendingList extends ConsumerWidget {
             onSaveToggle: () async {
               try {
                 await ref.read(bookmarksProvider.notifier).toggleBookmark(repo);
+              } on RateLimitedException {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.rateLimitError)),
+                  );
+                }
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(

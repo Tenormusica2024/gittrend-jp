@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_typography.dart';
 
@@ -6,9 +7,13 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get lightTheme {
+    // Noto Sans JPを基本フォントとして使用（中華フォント回避）
+    final baseTextTheme = GoogleFonts.notoSansJpTextTheme();
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: GoogleFonts.notoSansJp().fontFamily,
       colorScheme: ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.secondary,
@@ -85,13 +90,14 @@ class AppTheme {
         color: AppColors.cardBorder,
         thickness: 1,
       ),
-      textTheme: const TextTheme(
-        headlineLarge: AppTypography.h1,
-        headlineMedium: AppTypography.h2,
-        titleLarge: AppTypography.subtitle,
-        bodyLarge: AppTypography.bodyLarge,
-        bodyMedium: AppTypography.body,
-        labelMedium: AppTypography.caption,
+      // Noto Sans JP を適用したテキストテーマ
+      textTheme: baseTextTheme.copyWith(
+        headlineLarge: AppTypography.h1.copyWith(fontFamily: GoogleFonts.notoSansJp().fontFamily),
+        headlineMedium: AppTypography.h2.copyWith(fontFamily: GoogleFonts.notoSansJp().fontFamily),
+        titleLarge: AppTypography.subtitle.copyWith(fontFamily: GoogleFonts.notoSansJp().fontFamily),
+        bodyLarge: AppTypography.bodyLarge.copyWith(fontFamily: GoogleFonts.notoSansJp().fontFamily),
+        bodyMedium: AppTypography.body.copyWith(fontFamily: GoogleFonts.notoSansJp().fontFamily),
+        labelMedium: AppTypography.caption.copyWith(fontFamily: GoogleFonts.notoSansJp().fontFamily),
       ),
     );
   }
