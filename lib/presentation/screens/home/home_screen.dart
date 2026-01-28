@@ -162,8 +162,13 @@ class _TrendingList extends ConsumerWidget {
         ref.read(lastRefreshTimeProvider(since).notifier).state = now;
         // ref.refresh() を使用してデータ取得完了を待機
         // これによりRefreshIndicatorが正しくローディング状態を維持する
-        // ignore: unused_result
-        await ref.refresh(trendingRepositoriesProvider(since).future);
+        try {
+          // ignore: unused_result
+          await ref.refresh(trendingRepositoriesProvider(since).future);
+        } catch (e) {
+          // API失敗時もRefreshIndicatorは正しく終了する
+          // エラー表示はasyncRepos.whenのerrorハンドラで行われる
+        }
       },
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 16),

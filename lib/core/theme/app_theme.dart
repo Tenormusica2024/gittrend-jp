@@ -21,7 +21,7 @@ class AppTheme {
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.background,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -91,13 +91,14 @@ class AppTheme {
         thickness: 1,
       ),
       // Noto Sans JP を適用したテキストテーマ
+      // AppTypographyに既にfontFamilyが設定されているため、そのまま使用
       textTheme: baseTextTheme.copyWith(
-        headlineLarge: AppTypography.h1.copyWith(fontFamily: GoogleFonts.notoSansJp().fontFamily),
-        headlineMedium: AppTypography.h2.copyWith(fontFamily: GoogleFonts.notoSansJp().fontFamily),
-        titleLarge: AppTypography.subtitle.copyWith(fontFamily: GoogleFonts.notoSansJp().fontFamily),
-        bodyLarge: AppTypography.bodyLarge.copyWith(fontFamily: GoogleFonts.notoSansJp().fontFamily),
-        bodyMedium: AppTypography.body.copyWith(fontFamily: GoogleFonts.notoSansJp().fontFamily),
-        labelMedium: AppTypography.caption.copyWith(fontFamily: GoogleFonts.notoSansJp().fontFamily),
+        headlineLarge: AppTypography.h1,
+        headlineMedium: AppTypography.h2,
+        titleLarge: AppTypography.subtitle,
+        bodyLarge: AppTypography.bodyLarge,
+        bodyMedium: AppTypography.body,
+        labelMedium: AppTypography.caption,
       ),
     );
   }
