@@ -53,3 +53,12 @@ keystore-base64.txt
 functions/node_modules/
 functions/lib/
 functions/.env
+
+# Local development scratch files
+d_dir_list.txt
+git_error.txt
+log.txt
+status.txt
+remote.txt
+deploy_log.txt
+release-artifacts/

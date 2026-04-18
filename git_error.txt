@@ -1,5 +1,0 @@
-fatal: detected dubious ownership in repository at 'D:/antigravity_projects/gittrend-jp'
-'D:/antigravity_projects/gittrend-jp' is on a file system that does not record ownership
-To add an exception for this directory, call:
-
-	git config --global --add safe.directory D:/antigravity_projects/gittrend-jp
