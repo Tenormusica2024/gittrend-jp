@@ -48,6 +48,17 @@ app.*.map.json
 android/key.properties
 android/*.jks
 keystore-base64.txt
+keystore-base64-clean.txt
+keystore-temp.txt
+
+# Local logs / temp artifacts
+deploy_log.txt
+git_error.txt
+log.txt
+remote.txt
+status.txt
+release/
+store/screenshots/
 
 # Firebase Functions
 functions/node_modules/
