@@ -32,7 +32,7 @@ GitTrend JP は、GitHub のトレンドリポジトリを日本人開発者向�
 
 ## 技術スタック
 
-- **Framework**: Flutter 3.x
+- **Framework**: Flutter 3.27.2 stable（CI / release workflow で検証）
 - **State Management**: Riverpod
 - **Local DB**: Hive
 - **API**: GitHub GraphQL API
@@ -41,6 +41,9 @@ GitTrend JP は、GitHub のトレンドリポジトリを日本人開発者向�
 ## Fork / clone 後の最短導線
 
 この repo は Flutter / Firebase / Android 配布設定などが関わるため、fresh fork 直後はまず **ローカルでアプリが起動できるか** を確認するのが自然です。
+
+現在の public CI / release workflow では **Flutter 3.27.2 stable** を前提にしています。  
+fresh fork 直後も、まず同系統の Flutter stable で `analyze` / `test` が通るかを見るのがおすすめです。
 
 最短導線:
 
@@ -76,6 +79,14 @@ flutter run
 # ローカルビルド
 flutter build apk --release
 flutter build web --release
+```
+
+CI でも Flutter アプリ本体に対して以下を回す想定:
+
+```bash
+flutter pub get
+flutter analyze
+flutter test
 ```
 
 ## デプロイ

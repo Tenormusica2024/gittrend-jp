@@ -12,7 +12,7 @@
 
 ## 前提
 
-- Flutter SDK
+- Flutter SDK（推奨: **3.27.2 stable**。CI / release workflow でもこの系統を利用）
 - Dart SDK（Flutter 同梱）
 - Android Studio or Android SDK（実機 / emulator で起動したい場合）
 
@@ -34,6 +34,14 @@ cd gittrend-jp
 ```bash
 flutter pub get
 ```
+
+### 2.5. Flutter version を確認
+
+```bash
+flutter --version
+```
+
+少なくとも quickstart の最初は、CI と揃えて **Flutter 3.27.2 stable** 近辺で試すのがおすすめ。
 
 ### 3. 静的解析
 
@@ -61,6 +69,7 @@ flutter run
 - Riverpod / Hive / router 周りの依存が壊れていない
 - widget test が最低限通る
 - ローカル開発に進める状態かどうかが分かる
+- CI が想定している Flutter stable でローカル確認できる
 
 ---
 

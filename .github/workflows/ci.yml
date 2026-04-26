@@ -20,6 +20,7 @@ jobs:
       javascript: ${{ steps.detect.outputs.javascript }}
       typescript: ${{ steps.detect.outputs.typescript }}
       html: ${{ steps.detect.outputs.html }}
+      flutter: ${{ steps.detect.outputs.flutter }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,6 +31,11 @@ jobs:
           echo "javascript=$(find . -name '*.js' -not -path './node_modules/*' -not -path './.*' | head -1 | wc -l | xargs)" >> $GITHUB_OUTPUT
           echo "typescript=$(find . -name '*.ts' -not -path './node_modules/*' -not -path './.*' | head -1 | wc -l | xargs)" >> $GITHUB_OUTPUT
           echo "html=$(find . -name '*.html' -not -path './.*' | head -1 | wc -l | xargs)" >> $GITHUB_OUTPUT
+          if [ -f "pubspec.yaml" ] && [ -d "lib" ]; then
+            echo "flutter=1" >> $GITHUB_OUTPUT
+          else
+            echo "flutter=0" >> $GITHUB_OUTPUT
+          fi
 
   # Python プロジェクト用
   python-lint:
@@ -104,6 +110,29 @@ jobs:
         run: htmlhint "**/*.html" --ignore "**/node_modules/**" || true
         continue-on-error: true
 
+  # Flutter アプリ用
+  flutter-validate:
+    needs: detect-language
+    if: needs.detect-language.outputs.flutter == '1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.2'
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run Flutter analyze
+        run: flutter analyze
+
+      - name: Run Flutter tests
+        run: flutter test
+
   # セキュリティスキャン（全プロジェクト共通）
   security-scan:
     runs-on: ubuntu-latest
@@ -133,5 +162,6 @@ jobs:
           echo "- JavaScript detected: ${{ needs.detect-language.outputs.javascript }}" >> $GITHUB_STEP_SUMMARY
           echo "- TypeScript detected: ${{ needs.detect-language.outputs.typescript }}" >> $GITHUB_STEP_SUMMARY
           echo "- HTML detected: ${{ needs.detect-language.outputs.html }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Flutter detected: ${{ needs.detect-language.outputs.flutter }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "CI completed at $(date)" >> $GITHUB_STEP_SUMMARY
